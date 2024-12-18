@@ -14,7 +14,7 @@ data {
   // group membership vector 2
   //int N_group2[N];
   // Count outcome
-  array[N] int<lower=0> y;
+  array int<lower=0> y[N];
   real beta; //fixed gain of logistic changepoint
 }
 
