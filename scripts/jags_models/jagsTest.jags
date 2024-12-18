@@ -1,0 +1,40 @@
+model {
+
+  # Priors for population-level effects
+  cp_0 = MINX  # mcp helper value.
+  cp_2 = MAXX  # mcp helper value.
+
+  cp_1 ~ dunif(MINX, MAXX)
+  int_1 ~ dnorm(0, 1/(10)^2) 
+  int_2 ~ dnorm(0, 1/(10)^2) 
+  x_1 ~ dnorm(0, 1/(10)^2) 
+  x_2 ~ dnorm(0, 1/(10)^2)
+  mu.alpha ~ dnorm(0,0.001)
+  tau <- pow(sigma,-2)
+  tau.alpha <- pow(sigma.alpha,-2)
+
+  # Model and likelihood
+  for (i_ in 1:length(x)) {
+    for (j in 1:G) {
+        u[j] ~ dnorm(0, tau_u)
+    }
+    X_1_[i_] = min(x[i_], cp_1)
+    X_2_[i_] = min(x[i_], cp_2) - cp_1
+
+    # Fitted value
+    y_i_[i] = 
+    
+      # Segment 1: cbcl_scr_syn_external_r ~ 1 + x
+      (x[i_] >= cp_0) * (x[i_] < cp_1) * int_1 + u[group[i_]] + 
+      (x[i_] >= cp_0) * (x[i_] < cp_1) * x_1 * X_1_[i_] + 
+    
+      # Segment 2: cbcl_scr_syn_external_r ~ 1 ~ 1 + x
+      (x[i_] >= cp_1) * int_2 + u[group[i_]] + 
+      (x[i_] >= cp_1) * x_2 * X_2_[i_] 
+
+    # Likelihood and log-density for family = poisson()
+    cbcl_scr_syn_external_r[i_] ~ dpois(exp(y_[i_]))
+    delta[i] ~ dnorm( d, prec )
+    loglik_[i_] = logdensity.pois(cbcl_scr_syn_external_r[i_], exp(y_[i_]))
+  }
+}

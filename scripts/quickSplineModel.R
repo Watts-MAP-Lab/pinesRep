@@ -3,18 +3,37 @@ in.dat <- read.csv("./data/ABCD_CBCL_BL.csv")
 in.dat <- in.dat[complete.cases(in.dat$cbcl_scr_syn_external_r),]
 in.dat <- in.dat[complete.cases(in.dat$cbcl_scr_syn_internal_r),]
 
+## Now load the CBCL hurdle model values
+in.dat2 <- readRDS("~/Documents/hurdleModelExplore/data/forAshleyCBCL.RDS")
+
 ## Load library(s)
 library(mgcv)
 library(brms)
 library(visreg)
+library(mcp)
+library(pscl)
 
-## run spline model bayes
-mod.one <- brm(cbcl_scr_syn_external_r ~ s(cbcl_scr_syn_internal_r), data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000)
-mod.one2 <- brm(cbcl_scr_syn_external_r ~ s(cbcl_scr_syn_internal_r), data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000, family="poisson")
+## Zero-inflated poisson regression
+mlZI <- zeroinfl(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r | cbcl_scr_syn_internal_r, data = in.dat)
+mlHurd <- hurdle(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r, data = in.dat)
+mlBase <- glm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r, family = "poisson", data = in.dat)
+
+# ## run spline model bayes
+# mod.one <- brm(cbcl_scr_syn_external_r ~ s(cbcl_scr_syn_internal_r), data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000)
+# mod.one2 <- brm(cbcl_scr_syn_external_r ~ s(cbcl_scr_syn_internal_r), data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000, family="poisson")
+# ## Now add the percentile interaction here? this is going to blow up model estimation time
+# in.dat$decileGroup <- cut(in.dat$cbcl_scr_syn_internal_r, quantile(in.dat$cbcl_scr_syn_internal_r, prob=seq(0,1,length=4), na.rm=TRUE), include.lowest = TRUE)
+# mod.one3 <- brm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r*decileGroup, data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000, family="poisson")
+mod.one3 <- brm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r, data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000, family="poisson")
+stancode(mod.one3)
+mod.one3 <- brm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r, data = in.dat, cores = 5, thin = 10, iter = 6000, warmup = 2000)
+stancode(mod.one3)
 
 ## run spline mgcv REML
 mod.two <- mgcv::gam(cbcl_scr_syn_external_r ~ s(cbcl_scr_syn_internal_r), data = in.dat)
 mod.two2 <- mgcv::gam(cbcl_scr_syn_external_r ~ s(cbcl_scr_syn_internal_r), data = in.dat, family="poisson")
+
+## Now do a poisson lmer model to examine random effects
 
 ## Plot these gams
 visreg(mod.two2)
@@ -29,7 +48,11 @@ ggplot(in.dat, aes(x=cbcl_scr_syn_internal_r, y = cbcl_scr_syn_external_r)) +
 
 ## Now look into lin mod factors
 in.dat$decileGroup <- cut(in.dat$cbcl_scr_syn_internal_r, quantile(in.dat$cbcl_scr_syn_internal_r, prob=seq(0,1,length=4), na.rm=TRUE), include.lowest = TRUE)
+in.dat$scaleVals <- scale(in.dat$cbcl_scr_syn_internal_r)[,]
 mod.thr <- glm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r*decileGroup, data = in.dat, family="poisson")
+mod.thr.s <- glm(cbcl_scr_syn_external_r ~ scaleVals, data = in.dat)
+mod.thr.so <- glm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r, data = in.dat)
+
 visreg(mod.thr, "cbcl_scr_syn_internal_r", "decileGroup")
 mod.thr2 <- glm(cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r*decileGroup, data = in.dat)
 visreg(mod.thr, "cbcl_scr_syn_internal_r", "decileGroup")
@@ -124,3 +147,97 @@ p33 <- ggplot(in.dat, aes(x=cbcl_scr_syn_internal_r, y=cbcl_scr_syn_external_r))
   geom_quantile(quantiles = seq(0,.9,.1), color="black") +
   theme_bw()
 p.gaus <- ggarrange(ggarrange(p11, p22, nrow = 1), p33, nrow=2)
+
+## Now run a change point model on the extern ~ intern
+model = list(
+  cbcl_scr_syn_external_r ~ 1 + cbcl_scr_syn_internal_r,  # plateau (int_1)
+  ~ 1 + cbcl_scr_syn_internal_r    # joined slope (time_2) at cp_1
+)
+
+fit1 = mcp(model, data = in.dat, family=poisson(), cores=1, chains = 1, adapt = 1000, iter=2000)
+
+dat <- list(N = nrow(in.dat), x=)
+
+## Now do a 2 cp model
+model2 = list(
+  cbcl_scr_syn_external_r ~ 1 + cbcl_scr_syn_internal_r,  # plateau (int_1)
+  ~ 1 + cbcl_scr_syn_internal_r,    # joined slope at cp_1
+  ~ 1 + cbcl_scr_syn_internal_r    # joined slope at cp_2
+)
+fit2 = mcp(model2, data = in.dat, family=poisson(), cores=3, chains = 3, adapt = 2000, iter=5000) ## No model convergence at all here -- 1 cp is the way to go
+
+
+## Now do the same with intern ~ extern
+model = list(
+  cbcl_scr_syn_internal_r ~ 1 + cbcl_scr_syn_external_r,  # plateau (int_1)
+  ~ 1 + cbcl_scr_syn_external_r    # new intercept & slope (time_2) at cp_1
+)
+fit1B = mcp(model, data = in.dat, family=poisson(), cores=4, chains = 4, adapt = 2000, iter=5000)
+
+model2 = list(
+  cbcl_scr_syn_internal_r ~ 1 + cbcl_scr_syn_external_r,  # plateau (int_1)
+  ~ 1 + cbcl_scr_syn_external_r,    # joined slope at cp_1
+  ~ 1 + cbcl_scr_syn_external_r    # joined slope at cp_2
+)
+fit2B = mcp(model2, data = in.dat, family=poisson(), cores=3, chains = 3, adapt = 2000, iter=5000) ## No model convergence at all here -- 1 cp is the way to go
+
+
+
+## Ok we are going to move forward with the CP models -- so now I am going to try to run a single
+## mixed effects cp model looking across all higher order constructs
+## first I need to prep the data
+# options(mc.cores = 4)  # Speed up sampling
+# ## reshape the data for the higher order
+# iso.vals <- names(in.dat)[c(131,130,127,126)]
+# pairs(in.dat[,iso.vals])
+# for.mod <- in.dat[,iso.vals]
+# for.mod <- reshape2::melt(data = for.mod, id.vars=c("cbcl_scr_syn_external_r"))
+# ## Now train the model
+# model = list(
+#   cbcl_scr_syn_external_r ~ 1 + value,  # int_1 + slope_1
+#   1 + (1|variable) ~ 1 + value  # cp_1, cp_1_sd, cp_1_id[i]
+# )
+# fit = mcp(model, data = for.mod, chains = 500, adapt = 250)
+
+## This does not work because I also need to include random slopes for these data
+## I am going to try to build this model in BRMS and sample w/ STAN
+## I am following a lot fo the logic on this thread: https://discourse.mc-stan.org/t/piecewise-linear-mixed-models-with-a-random-change-point/5306/18
+## I will first try to replicate the single change point model I am running with MCP above in STAN
+iso.vals <- names(in.dat)[c(131,127,126)]
+pairs(in.dat[,iso.vals])
+for.mod <- in.dat[,iso.vals]
+for.mod <- reshape2::melt(data = for.mod, id.vars=c("cbcl_scr_syn_external_r"))
+model = list(
+  cbcl_scr_syn_external_r ~ 1 + value,  # int_1 + slope_1
+  1 + (1|variable) ~ 1 + value  # cp_1, cp_1_sd, cp_1_id[i]
+)
+fit = mcp(model, data = for.mod, chains = 500, adapt = 250)
+
+model = list(
+  cbcl_scr_syn_internal_r ~ 1 + cbcl_scr_syn_external_r,  # plateau (int_1)
+  ~ 1 + cbcl_scr_syn_external_r    # new intercept & slope (time_2) at cp_1
+)
+prior_list = list(
+  list(cp_1 = 1),
+  list(cp_1 = 3),
+  list(cp_1 = 5),
+  list(cp_1 = 7),
+  list(cp_1 = 9),
+  list(cp_1 = 11),
+  list(cp_1 = 13)
+)
+mod_list = list()
+for(i in 1:6){
+  fit1 = mcp(model, data = in.dat, family=poisson(), cores=1, chains = 1, adapt = 1000, iter=2000, prior = prior_list[[i]])
+  mod_list[[i]] <- fit1
+}
+vals <- lapply(mod_list, summary)
+vals <- dplyr::bind_rows(vals)
+vals$mod <- rep(c(1, 3, 5, 7, 9, 11), each = 5)
+## Isolate cp p slope
+vals.plot <- vals[which(vals$name=="cbcl_scr_syn_external_r_2"),]
+
+ggplot(vals.plot, aes(x=factor(mod), y=mean)) +
+geom_bar(stat = "identity") +
+geom_errorbar(aes(ymin=lower, ymax =upper)) +
+facet_grid(name ~ ., scales="free")
