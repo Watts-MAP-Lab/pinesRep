@@ -1,21 +1,14 @@
 data {
-  // Define variables in data
-  // Number of observations (an integer)
-  int<lower=0> N;
-  int<lower=0> count_group;
-  //int<lower=0> count_group2;
-  
-  // primary predictor
-  vector[N] x;
-  // age predictor
-  vector[N] x2;
-  // group membership vector 1
-  int[N] N_group;
-  // group membership vector 2
-  //int N_group2[N];
-  // Count outcome
-  array[N] int<lower=0> y;
-  real beta; //fixed gain of logistic changepoint
+  int<lower=0> N;                 // Number of observations
+  int<lower=0> count_group;       // Number of groups in N_group
+  //int<lower=0> count_group2;      // Number of groups in N_group2
+  vector[N] x;                    // primary predictor
+  vector[N] x2;                   // age predictor
+  int N_group[N];                 // group membership vector 1
+  //int N_group2[N];                // group membership vector 2
+  int<lower=0> y[N];              // Count outcome
+  real beta;                      // fixed gain of logistic changepoint
+
 }
 
 parameters {
