@@ -10,11 +10,11 @@ data {
   // age predictor
   vector[N] x2;
   // group membership vector 1
-  int N_group[N];
+  int[N] N_group;
   // group membership vector 2
   //int N_group2[N];
   // Count outcome
-  array int<lower=0> y[N];
+  array[N] int<lower=0> y;
   real beta; //fixed gain of logistic changepoint
 }
 
