@@ -21,7 +21,7 @@ parameters {
   vector[count_group2] aa2;
   real<lower=0> sigma_p; // sd for intercept global
   real<lower=0> sigma_p2; // sd for intercept global
-  real<lower=2*beta, upper =-51*beta>  alpha;
+  real<lower=-1*beta, upper =-51*beta>  alpha;
 
 }
 
@@ -43,7 +43,7 @@ model {
   b3 ~ normal(0,1);
   sigma_p ~ exponential(12);
   sigma_p2 ~ exponential(4);
-  alpha ~ normal(25,3);
+  alpha ~ normal(60,3);
   
   // Likelihood part of Bayesian inference
   aa1 ~ normal(0,sigma_p);

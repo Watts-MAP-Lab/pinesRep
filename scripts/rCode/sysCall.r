@@ -40,7 +40,7 @@ for(z in 1:nrow(all.mods)){
     tmp.dat <- in.dat[complete.cases(tmp.dat[,c(all.mods$Var1[z], all.mods$Var2[z], "interview_age")]),]
     data_jags <- list(
       N = nrow(tmp.dat),
-      x = scale(tmp.dat[,all.mods$Var2[z]])[,],
+      x = tmp.dat[,all.mods$Var2[z]],
       y = tmp.dat[,all.mods$Var1[z]],
       x2 = tmp.dat$interview_age,
       N_group = as.numeric(factor(tmp.dat$site_id_l)),
