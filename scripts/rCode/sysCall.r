@@ -45,8 +45,8 @@ for(z in 1:nrow(all.mods)){
       x2 = tmp.dat$interview_age,
       N_group = as.numeric(factor(tmp.dat$site_id_l)),
       count_group = length(unique(as.numeric(factor(tmp.dat$site_id_l)))),
-      N_group2 = as.numeric(factor(tmp.dat$rel_family_id)),
-      count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
+      #N_group2 = as.numeric(factor(tmp.dat$rel_family_id)),
+      #count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
       beta = -5
     )
     all.dat[[index.val]] <- data_jags
@@ -54,13 +54,13 @@ for(z in 1:nrow(all.mods)){
   }
 }
 i <- as.integer(commandArgs(1))
-stanmonitor <- c("a1","a2","b1","b2","b3","alpha","sigma_p", "sigma_p2")
-file.out <- paste("./data/brmsModsOut/model_InvLogitRandSite_RandFam_", i, ".RDS", sep='')
+stanmonitor <- c("a1","a2","b1","b2","b3","alpha","sigma_p")
+file.out <- paste("./data/brmsModsOut/model_InvLogitRandSite2_", i, ".RDS", sep='')
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/updatedMultilevelInvLogit.stan", 
-                     data = all.dat[[i]], cores=2,chains=2,
+                     data = all.dat[[i]], cores=1,chains=2,
                      pars = stanmonitor, 
-                     iter=15000, warmup = 5000, thin = 5, control = list(max_treedepth=12))
+                     iter=15000, warmup = 5000, thin = 5, control = list(max_treedepth=11))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
