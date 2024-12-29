@@ -10,7 +10,7 @@
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
-#SBATCH --array=1-24
+#SBATCH --array=1-352
 
 module purge
 module load GCC/11.3.0
