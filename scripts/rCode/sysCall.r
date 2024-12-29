@@ -49,7 +49,7 @@ data_jags <- list(
 )
 all.dat <- data_jags
 stanmonitor <- c("a1","a2","b1","b2","b3","alpha","sigma_p", "sigma_p2")
-file.out <- paste("./data/brmsModsOut/model_InvLogitRandSite_allmods_", i, ".RDS", sep='')
+file.out <- paste("./data/brmsModsOut/model_InvLogitRandSite_allmods_", rowID, ".RDS", sep='')
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/updatedMultilevelInvLogit.stan", 
                      data = all.dat, cores=2,chains=2,
