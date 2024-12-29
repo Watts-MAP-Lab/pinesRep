@@ -43,8 +43,8 @@ data_jags <- list(
   x2 = tmp.dat$interview_age,
   N_group = as.numeric(factor(tmp.dat$site_id_l)),
   count_group = length(unique(as.numeric(factor(tmp.dat$site_id_l)))),
-  #N_group2 = as.numeric(factor(tmp.dat$rel_family_id)),
-  #count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
+  N_group2 = as.numeric(factor(tmp.dat$rel_family_id)),
+  count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
   beta = -5
 )
 all.dat <- data_jags
