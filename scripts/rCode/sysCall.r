@@ -14,7 +14,7 @@ all.mods$Var1 <- as.character(all.mods$Var1)
 all.mods$Var2 <- as.character(all.mods$Var2)
 all.mods <- all.mods[-which(as.character(all.mods$Var1)==as.character(all.mods$Var2)),]
 rowID <- as.integer(commandArgs(1))
-i <- all.mods[i,3]
+i <- all.mods[rowID,3]
 ## Now go through the wave value
 ## create the data
 if(i == 1){
@@ -35,11 +35,11 @@ if(i > 1){
   in.dat <- merge(in.dat, in.dat.bp.family, by=c("src_subject_id", "site_id_l"), suffixes = c(".x",""))
 }
 tmp.dat <- in.dat
-tmp.dat <- in.dat[complete.cases(tmp.dat[,c(all.mods$Var1[z], all.mods$Var2[z], "interview_age")]),]
+tmp.dat <- in.dat[complete.cases(tmp.dat[,c(all.mods$Var1[rowID], all.mods$Var2[rowID], "interview_age")]),]
 data_jags <- list(
   N = nrow(tmp.dat),
-  x = tmp.dat[,all.mods$Var2[z]],
-  y = tmp.dat[,all.mods$Var1[z]],
+  x = tmp.dat[,all.mods$Var2[rowID]],
+  y = tmp.dat[,all.mods$Var1[rowID]],
   x2 = tmp.dat$interview_age,
   N_group = as.numeric(factor(tmp.dat$site_id_l)),
   count_group = length(unique(as.numeric(factor(tmp.dat$site_id_l)))),
