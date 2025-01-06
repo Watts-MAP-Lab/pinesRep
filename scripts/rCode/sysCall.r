@@ -48,13 +48,13 @@ data_jags <- list(
   beta = -5
 )
 all.dat <- data_jags
-stanmonitor <- c("a1","a2","b1","b2","b3","alpha","sigma_p", "sigma_p2")
+stanmonitor <- c("a1","a2","b1","b2","b3","alpha","sigma_p", "sigma_p2", "rateVal")
 file.out <- paste("./data/brmsModsOut/model_InvLogitRandSite_allmods_", rowID, ".RDS", sep='')
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/updatedMultilevelInvLogit.stan", 
                      data = all.dat, cores=2,chains=2,
                      pars = stanmonitor, 
-                     iter=17000, warmup = 5000, thin = 5, control = list(max_treedepth=11))
+                     iter=25000, warmup = 5000, thin = 10, control = list(max_treedepth=11))
   saveRDS(result_case, file.out)
 }else{
   print("Done")

@@ -22,6 +22,7 @@ parameters {
   real<lower=0> sigma_p; // sd for intercept global
   real<lower=0> sigma_p2; // sd for intercept global
   real<lower=-1*beta, upper =-51*beta>  alpha;
+  real rateVal; //neg binom added var
 
 }
 
@@ -44,9 +45,11 @@ model {
   sigma_p ~ exponential(12);
   sigma_p2 ~ exponential(4);
   alpha ~ normal(55,6);
+  rateVal ~ exponential(1);
   
   // Likelihood part of Bayesian inference
   aa1 ~ normal(0,sigma_p);
   aa2 ~ normal(0,sigma_p2);
-  y ~ poisson_log(lp);
+  //y ~ poisson_log(lp);
+  y ~ neg_binomial(lp, rateVal);
 }
