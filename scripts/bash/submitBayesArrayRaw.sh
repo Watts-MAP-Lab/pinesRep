@@ -3,8 +3,8 @@
 #SBATCH --mem=6G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --output=./outputTextScale/r_output_%J_%a.txt
-#SBATCH --error=./errorTextScale/r_error_%J_%a.txt
+#SBATCH --output=./outputTextRaw/r_output_%J_%a.txt
+#SBATCH --error=./errorTextRaw/r_error_%J_%a.txt
 #SBATCH --time=36:00:00
 #SBATCH --job-name=change_point_bayes
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
@@ -21,10 +21,5 @@ echo ${SLURM_ARRAY_TASK_ID}
 echo "Submitting job"
 date
 start=`date +%s`
-Rscript ./scripts/rCode/sysCall.r ${SLURM_ARRAY_TASK_ID}
+Rscript ./scripts/rCode/sysCallRaw.r ${SLURM_ARRAY_TASK_ID}
 echo "Done"
-end=`date +%s`
-runtime=$((end-start))
-date
-echo " Total runtime:" 
-echo ${runtime}
