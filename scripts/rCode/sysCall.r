@@ -46,9 +46,8 @@ all.mods <- expand.grid(mod.dv, mod.iv, iter)
 all.mods$Var1 <- as.character(all.mods$Var1)
 all.mods$Var2 <- as.character(all.mods$Var2)
 all.mods <- all.mods[-which(as.character(all.mods$Var1)==as.character(all.mods$Var2)),]
-#all.mods <- unique(all.mods)
+all.mods <- unique(all.mods)
 rowID <- as.integer(commandArgs(1))
-rowID <- 1
 i <- all.mods[rowID,3]
 ## Now go through the wave value
 ## create the data
