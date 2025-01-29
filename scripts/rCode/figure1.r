@@ -15,7 +15,7 @@ in.dat <- read.csv("./data/ABCD_CBCL_BL.csv")
 library(brms)
 library(bayesplot)
 library(rstan)
-library(mcp)
+#library(mcp)
 library(ggplot2)
 library(ggpubr)
 
@@ -40,24 +40,20 @@ data_jags <- list(
   count_group = length(unique(as.numeric(factor(tmp.dat$site_id_l)))),
   N_group2 = as.numeric(factor(tmp.dat$rel_family_id)),
   count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
-  beta = -5
+  beta = -6
 )
-stanmonitor <- c("a1","a2","a3","b1","b2","b3","b4","alpha","sigma_p", "sigma_p2", "phi","lp","w1","w2","w3")
+stanmonitor <- c("a1","a2","a3","b1","b2","b3","b4","alpha","sigma_p","sigma_p2","phi")
 
 result_case = stan(file="./scripts/stan_models/doubleChangePoint.stan",
                    data = data_jags, cores=2,chains=2,
                    pars = stanmonitor,
-                   iter=6000, warmup = 3000, thin = 2,control = list(max_treedepth=11))
+                   iter=70, warmup = 35, thin = 2,control = list(max_treedepth=12))
 saveRDS(result_case, file="./data/brmsModsOut/two_cp_converge.RDS")
+q()
 result_case = readRDS("./data/brmsModsOut/two_cp_converge.RDS")
 tmp <- summary(result_case)
 tmp <- tmp$summary
-lp.vals <- tmp[grep(pattern = "^lp", x = rownames(tmp)),"mean"]
-w1.vals <- tmp[grep(pattern = "^w1", x = rownames(tmp)),]
-w2.vals <- tmp[grep(pattern = "^w2", x = rownames(tmp)),]
-w3.vals <- tmp[grep(pattern = "^w3", x = rownames(tmp)),]
 
-w.vals <- matrix(w.vals, nrow = 11859, ncol = 3)
 ## Now organize all of these model predictions in the original data frame
 tmp.dat$predNone <- sum.none$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.none$fixed["cbcl_scr_syn_internal_r","Estimate"]
 ## Now do the pred vals for the 1-cp model
@@ -74,9 +70,9 @@ tmp.dat$predOne <- pred.vals.lin
 ## Create a matrix for the ordered inv logit vals
 sum.vals <- summary(result_case)$summary
 inv.logit <- matrix(NA, nrow = nrow(tmp.dat), ncol=3)
-inv.logit[,1] <- LaplacesDemon::invlogit(sum.vals["alpha","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -5)
-inv.logit[,2] <- LaplacesDemon::invlogit(sum.vals["alpha2","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -5) - LaplacesDemon::invlogit(sum.vals["alpha","mean"]+ tmp.dat$cbcl_scr_syn_internal_r * -5)
-inv.logit[,3] <- 1-LaplacesDemon::invlogit(sum.vals["alpha2","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -5) 
+inv.logit[,1] <- LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,2] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,3] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[2]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6) 
 pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
 pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
 pred.vals.thr <- sum.vals["a3","mean"] + sum.vals["b4","mean"] * tmp.dat$cbcl_scr_syn_internal_r
@@ -116,12 +112,9 @@ p3 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_extern
   coord_cartesian(ylim = c(0,5))
 
 ## Now grab the trace plots
-#t1 <- plot_pars(fit1, "cp_1", type="trace") + ylab("Changepoint location") + theme_bw()
 t1 <- bayesplot::mcmc_trace(mod.1cp, "alpha")
-#t2 <- plot_pars(fit2, "cp_1", type="trace") + ylab("Changepoint location") + theme_bw()
-t2 <- bayesplot::mcmc_trace(result_case, "alpha")
-#t3 <- plot_pars(fit2, "cp_2", type = "trace") + ylab("Changepoint location") + theme_bw()
-t3 <- bayesplot::mcmc_trace(result_case, "alpha2")
+t2 <- bayesplot::mcmc_trace(result_case, "alpha[1]")
+t3 <- bayesplot::mcmc_trace(result_case, "alpha[2]")
 
 ## Make a blank image
 blank1 <- ggplot() + theme_void()
