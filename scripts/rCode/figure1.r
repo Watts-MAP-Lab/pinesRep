@@ -47,9 +47,9 @@ stanmonitor <- c("a1","a2","a3","b1","b2","b3","b4","alpha","sigma_p","sigma_p2"
 result_case = stan(file="./scripts/stan_models/doubleChangePoint.stan",
                    data = data_jags, cores=2,chains=2,
                    pars = stanmonitor,
-                   iter=70, warmup = 35, thin = 2,control = list(max_treedepth=12))
+                   iter=20000, warmup = 10000, thin = 5,control = list(max_treedepth=12))
+
 saveRDS(result_case, file="./data/brmsModsOut/two_cp_converge.RDS")
-q()
 result_case = readRDS("./data/brmsModsOut/two_cp_converge.RDS")
 tmp <- summary(result_case)
 tmp <- tmp$summary
