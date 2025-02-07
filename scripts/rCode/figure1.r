@@ -42,20 +42,53 @@ data_jags <- list(
   count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
   beta = -6
 )
-stanmonitor <- c("a1","a2","a3","b1","b2","b3","b4","alpha","sigma_p","sigma_p2","phi")
-
-result_case = stan(file="./scripts/stan_models/doubleChangePoint.stan",
-                   data = data_jags, cores=2,chains=2,
-                   pars = stanmonitor,
-                   iter=20000, warmup = 10000, thin = 5,control = list(max_treedepth=12))
-
-saveRDS(result_case, file="./data/brmsModsOut/two_cp_converge.RDS")
+# stanmonitor <- c("a1","a2","a3","b1","b2","b3","b4","alpha", "lp", "aa1", "aa2")
+#
+# result_case = stan(file="./scripts/stan_models/doubleChangePoint.stan",
+#                    data = data_jags, cores=2,chains=2,
+#                    pars = stanmonitor,
+#                    iter=50000, warmup = 25000, thin = 5,control = list(max_treedepth=12))
+# saveRDS(result_case, file="./data/brmsModsOut/two_cp_converge.RDS")
+# q()
 result_case = readRDS("./data/brmsModsOut/two_cp_converge.RDS")
-tmp <- summary(result_case)
-tmp <- tmp$summary
+
+## Grab all of the aa1 & aa2 values
+# aa1.ints <- tmp[grep(pattern = "aa1", x = rownames(tmp)),]
+# plot(data_jags$x, aa1.ints[data_jags$N_group])
+# cor(data_jags$x, aa1.ints[data_jags$N_group])
+# 
+# aa2.ints <- tmp[grep(pattern = "aa2", x = rownames(tmp)),]
+# plot(data_jags$x, aa2.ints[data_jags$N_group2])
+# cor(data_jags$x, aa2.ints[data_jags$N_group2])
+# 
+# ## Now do these sums
+# plot(data_jags$x, aa2.ints[data_jags$N_group2] +  aa1.ints[data_jags$N_group])
+# cor(data_jags$x, aa2.ints[data_jags$N_group2])
+## Now remove result_case from mem
+
+## Now run the model w/o any random effects here
+mod.baseNR <- brms::brm(formula = cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r + interview_age, family = "Poisson", init = 10000, iter = 20000, thin=5, cores=2, chains=2,data = in.dat)
+sum.none1 <- summary(mod.baseNR)
+
+## Now do linear models
+mod.baseLin <- brms::brm(formula = cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r + interview_age + (1|site_id_l/rel_family_id), init = 10000, iter = 20000, thin=5, cores=2, chains=2,data = in.dat)
+mod.baseLinNR <- brms::brm(formula = cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r + interview_age, init = 10000, iter = 20000, thin=5, cores=2, chains=2,data = in.dat)
+mod.baseLinNR2 <- lm(formula = cbcl_scr_syn_external_r ~ cbcl_scr_syn_internal_r + interview_age,data = in.dat)
+
+sum.noneLin <- summary(mod.baseLin)
+sum.noneLin1 <- summary(mod.baseLinNR)
+
 
 ## Now organize all of these model predictions in the original data frame
 tmp.dat$predNone <- sum.none$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.none$fixed["cbcl_scr_syn_internal_r","Estimate"]
+tmp.dat$predNoneFE <- sum.none1$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.none1$fixed["cbcl_scr_syn_internal_r","Estimate"]
+## Now do exp version of this
+tmp.dat$predNone_exp <- exp(sum.none$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.none$fixed["cbcl_scr_syn_internal_r","Estimate"])
+tmp.dat$predNoneFE_exp <- exp(sum.none1$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.none1$fixed["cbcl_scr_syn_internal_r","Estimate"])
+tmp.dat$predNone_lin <- sum.noneLin$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.noneLin$fixed["cbcl_scr_syn_internal_r","Estimate"]
+tmp.dat$predNoneFE_lin <- sum.noneLin1$fixed["Intercept","Estimate"] + tmp.dat$cbcl_scr_syn_internal_r * sum.noneLin1$fixed["cbcl_scr_syn_internal_r","Estimate"]
+
+
 ## Now do the pred vals for the 1-cp model
 sum.vals <- summary(mod.1cp)$summary
 inv.logit.vals <- LaplacesDemon::invlogit(sum.vals["alpha","mean"]+ tmp.dat$cbcl_scr_syn_internal_r * -5)
@@ -65,10 +98,46 @@ pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_sc
 pred.vals.combo <- exp(pred.vals.one * (inv.logit.vals) + (1 - inv.logit.vals) * pred.vals.two)
 pred.vals.lin <- pred.vals.one * (inv.logit.vals) + (1 - inv.logit.vals) * pred.vals.two
 tmp.dat$predOne <- pred.vals.lin
+tmp.dat$predOneExp <- exp(pred.vals.lin)
+
+## Now repeat this process for the FE pois, FE gauss, & RE Gauss models
+# Start with the fix effects poisson model 
+mod.1cpFE <- readRDS("./data/brmsModsOut/cp_1_FE.RDS")
+sum.vals <- summary(mod.1cpFE)$summary
+inv.logit.vals <- LaplacesDemon::invlogit(sum.vals["alpha","mean"]+ tmp.dat$cbcl_scr_syn_internal_r * -6)
+## Now grab the predicted values
+pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.combo <- exp(pred.vals.one * (inv.logit.vals) + (1 - inv.logit.vals) * pred.vals.two)
+pred.vals.lin <- pred.vals.one * (inv.logit.vals) + (1 - inv.logit.vals) * pred.vals.two
+tmp.dat$predOneFE <- pred.vals.lin
+tmp.dat$predOneFEExp <- pred.vals.combo
+
+## Now do the gaussian 1cp models
+#FE here 
+mod.1cpFEG <- readRDS("./data/brmsModsOut/cp_1_FE_Gaus.RDS")
+sum.vals <- summary(mod.1cpFEG)$summary
+inv.logit.vals <- LaplacesDemon::invlogit(sum.vals["alpha","mean"]+ tmp.dat$cbcl_scr_syn_internal_r * -6)
+## Now grab the predicted values
+pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.lin <- pred.vals.one * (inv.logit.vals) + (1 - inv.logit.vals) * pred.vals.two
+tmp.dat$predOneFEGaus <- pred.vals.lin
+
+#RE here
+mod.1cpREG <- readRDS("./data/brmsModsOut/cp_1_RE_Gaus.RDS")
+sum.vals <- summary(mod.1cpREG)$summary
+inv.logit.vals <- LaplacesDemon::invlogit(sum.vals["alpha","mean"]+ tmp.dat$cbcl_scr_syn_internal_r * -6)
+## Now grab the predicted values
+pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.lin <- pred.vals.one * (inv.logit.vals) + (1 - inv.logit.vals) * pred.vals.two
+tmp.dat$predOneREGaus <- pred.vals.lin
 
 ## Do the same for the 2-cp model
 ## Create a matrix for the ordered inv logit vals
-sum.vals <- summary(result_case)$summary
+mod.2 <- readRDS("./data/brmsModsOut/two_cp_converge.RDS")
+sum.vals <- summary(mod.2)$summary
 inv.logit <- matrix(NA, nrow = nrow(tmp.dat), ncol=3)
 inv.logit[,1] <- LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
 inv.logit[,2] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
@@ -79,6 +148,75 @@ pred.vals.thr <- sum.vals["a3","mean"] + sum.vals["b4","mean"] * tmp.dat$cbcl_sc
 pred.vals.lin2 <- pred.vals.one * inv.logit[,1] + pred.vals.two * inv.logit[,2] + pred.vals.thr * inv.logit[,3] 
 pred.vals.combo2 <- exp(pred.vals.lin2)
 tmp.dat$predTwo <- pred.vals.lin2
+tmp.dat$predTwoExp <- pred.vals.combo2
+
+## Now do the same for the random effect pois link
+mod.2FE <- readRDS("./data/brmsModsOut/cp_2_FE.RDS")
+sum.vals <- summary(mod.2FE)$summary
+inv.logit <- matrix(NA, nrow = nrow(tmp.dat), ncol=3)
+inv.logit[,1] <- LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,2] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,3] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[2]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6) 
+pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.thr <- sum.vals["a3","mean"] + sum.vals["b4","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.lin2 <- pred.vals.one * inv.logit[,1] + pred.vals.two * inv.logit[,2] + pred.vals.thr * inv.logit[,3] 
+pred.vals.combo2 <- exp(pred.vals.lin2)
+tmp.dat$predTwoFE <- pred.vals.lin2
+tmp.dat$predTwoFEExp <- pred.vals.combo2
+
+## Now do the Gaussian links
+mod.2FEGaus <- readRDS("./data/brmsModsOut/cp_2_FE_Gaus.RDS")
+sum.vals <- summary(mod.2FEGaus)$summary
+inv.logit <- matrix(NA, nrow = nrow(tmp.dat), ncol=3)
+inv.logit[,1] <- LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,2] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,3] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[2]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6) 
+pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.thr <- sum.vals["a3","mean"] + sum.vals["b4","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.lin2 <- pred.vals.one * inv.logit[,1] + pred.vals.two * inv.logit[,2] + pred.vals.thr * inv.logit[,3] 
+tmp.dat$predTwoFEGaus <- pred.vals.lin2
+
+## Now do the Gaussian links
+mod.2REGaus <- readRDS("./data/brmsModsOut/cp_2_RE_Gaus.RDS")
+sum.vals <- summary(mod.2REGaus)$summary
+inv.logit <- matrix(NA, nrow = nrow(tmp.dat), ncol=3)
+inv.logit[,1] <- LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,2] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[1]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6)
+inv.logit[,3] <- 1 - LaplacesDemon::invlogit(sum.vals["alpha[2]","mean"]+tmp.dat$cbcl_scr_syn_internal_r * -6) 
+pred.vals.one <- sum.vals["a1","mean"] + sum.vals["b1","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.vals["a2","mean"] + sum.vals["b2","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.thr <- sum.vals["a3","mean"] + sum.vals["b4","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.lin2 <- pred.vals.one * inv.logit[,1] + pred.vals.two * inv.logit[,2] + pred.vals.thr * inv.logit[,3] 
+tmp.dat$predTwoREGaus <- pred.vals.lin2
+
+## Now make a corr matrix with the pred vals
+for.cormat <- tmp.dat[,c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")]
+## Now add the cut offs to these data
+for.cormat$internalThreshold <- cut(for.cormat$cbcl_scr_syn_internal_r, c(-1, 10, 14, Inf), labels = c("NonclinicalI", "At-riskI", "ClinicalI"))
+for.cormat$externalThreshold <- cut(for.cormat$cbcl_scr_syn_external_r, c(-1, 12, 16, Inf), labels = c("NonclinicalE", "At-riskE", "ClinicalE"))
+for.cormat$collapse <- paste(for.cormat$internalThreshold, for.cormat$externalThreshold)
+
+## Now do the ggpairs plot
+library(GGally)
+cor.mat <- ggpairs(for.cormat, columns=1:2,ggplot2::aes(colour = collapse))
+## Now do the correlation with the group vars
+
+## Now do a confusion matrix
+for.conf.mat <- reshape2::melt(table(for.cormat$internalThreshold, for.cormat$externalThreshold))
+conf.mat <- ggplot(data =  for.conf.mat, mapping = aes(x = Var1, y = Var2)) +
+  geom_tile(aes(fill = value), colour = "white") +
+  geom_text(aes(label = sprintf("%1.0f", value)), vjust = 1) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_bw() + theme(legend.position = "none") +
+  xlab("Internalizing") +
+  ylab("Externalizing")
+
+## Now put these together
+#ggarrange(cor.mat, conf.mat)
+source("~/GitHub/adroseHelperScripts/R/afgrHelpFunc.R")
+multiplot(cor.mat, conf.mat, cols=2)
 
 # in.dat.mcp$predOne <- log(predOne$predict)
 # predTwo <- predict(fit2)
@@ -88,28 +226,103 @@ tmp.dat$predTwo <- pred.vals.lin2
 p1 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
   geom_point(alpha=0) +
   theme_bw() +
-  geom_hex(aes(fill=log(..count..)), bins=15) +
+  geom_hex(aes(fill=log(..count..)), bins=30) +
   geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNone)) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNone), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNoneFE), color="red") +
   xlab("Internal") + ylab("log(External)") +
   theme(legend.position = "NULL") +
   coord_cartesian(ylim = c(0,5))
 p1
+## Now do the exp version of p1 with the four models
+p12 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = cbcl_scr_syn_external_r)) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins = 50, color="white") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNone_exp), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNoneFE_exp), color="red") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNone_lin), color="yellow") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNoneFE_lin), color="purple") +
+  coord_cartesian(ylim=c(0,50), xlim=c(0,50)) +
+  xlab("Internal") + ylab("External") +
+  theme(legend.position = "NULL")
+p12
+
+p13 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins=30) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNone)) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNone), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predNoneFE), color="red") +
+  xlab("Internal") + ylab("log(External)") +
+  theme(legend.position = "NULL") +
+  coord_cartesian(ylim = c(0,5))
+
 p2 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
   geom_point(alpha=0) +
   theme_bw() +
-  geom_hex(aes(fill=log(..count..)), bins=15) +
+  geom_hex(aes(fill=log(..count..))) +
   geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOne)) +
+  xlab("Internal") + ylab("log(External)") +
+  theme(legend.position = "NULL") +
+  coord_cartesian(ylim = c(0,5))
+p22 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = cbcl_scr_syn_external_r)) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins = 50, color="white") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOneExp), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOneFEExp), color="red") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOneREGaus), color="yellow") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOneFEGaus), color="purple") +
+  coord_cartesian(ylim=c(0,50), xlim=c(0,50)) +
+  xlab("Internal") + ylab("External") +
+  theme(legend.position = "NULL")
+p22
+p23 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins=30) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOne)) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOne), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOneFE), color="red") +
   xlab("Internal") + ylab("log(External)") +
   theme(legend.position = "NULL") +
   coord_cartesian(ylim = c(0,5))
 p3 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
   geom_point(alpha=0) +
   theme_bw() +
-  geom_hex(aes(fill=log(..count..)), bins=15) +
+  geom_hex(aes(fill=log(..count..))) +
   geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwo)) +
   xlab("Internal") + ylab("log(External)") +
   theme(legend.position = "NULL") +
   coord_cartesian(ylim = c(0,5))
+p32 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = cbcl_scr_syn_external_r)) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins = 40, color="white") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwoExp), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwoFEExp), color="red") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwoREGaus), color="yellow") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwoFEGaus), color="purple") +
+  coord_cartesian(ylim=c(0,50), xlim=c(0,50)) +
+  xlab("Internal") + ylab("External") +
+  theme(legend.position = "NULL")
+p32
+p33 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins=30) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwo)) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwo), color="green") +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwoFE), color="red") +
+  xlab("Internal") + ylab("log(External)") +
+  theme(legend.position = "NULL") +
+  coord_cartesian(ylim = c(0,5))
+
+ggarrange(p12, p22, p32, labels = c("0", "1", "2"))
+ggarrange(p13, p23, p33, labels = c("0", "1", "2"))
+
 
 ## Now grab the trace plots
 t1 <- bayesplot::mcmc_trace(mod.1cp, "alpha")
