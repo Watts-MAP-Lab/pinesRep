@@ -1,3 +1,7 @@
+## load library(s)
+library(ggplot2)
+library(ggpubr)
+
 ## This script will be used to produce figure 2 for the cp paper
 ## figure 2 will examine all of the cp models across all higher order constructs
 ## Each figure will show the linear portion of the logistic regression model
@@ -15,11 +19,12 @@ index.val <- 1
 out.dat <- NULL
 no.mods <- NULL
 ## NOw isolate only the models of interest
-iso.vals <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_internal_r", "cbcl_scr_syn_thought_r")
-iter.pats <- which(all.mods$Var1 %in% iso.vals & all.mods$Var2 %in% iso.vals & all.mods$Var3==1)
+iso.vals <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")
 out.plots <- list()
 out.plots2 <- list()
 list.count <- 1
+## Now isolate wave 1 E ~ I & I ~ E
+iter.pats <- which(all.mods$Var1 %in% iso.vals & all.mods$Var2 %in% iso.vals & all.mods$Var3==1)
 ## Now go through and plot all of these data
 for(z in iter.pats){
   ## create the data
@@ -64,6 +69,7 @@ for(z in iter.pats){
     
     ## First obtain the inv logit vals
     inv.logit.vals <- LaplacesDemon::invlogit(sum.vals["alpha"] + data_jags$x * -5)
+    
     ## Now plot the predicted values
     pred.vals.one <- sum.vals["a1"] + sum.vals["b1"] * data_jags$x
     pred.vals.two <- sum.vals["a2"] + sum.vals["b2"] * data_jags$x
@@ -126,11 +132,11 @@ for(z in iter.pats){
 }
 ## Now go ahead and make the ggarrange for all of these
 all.pats <- all.mods[iter.pats,]
-fig.one <- out.plots2[[which(all.pats[,1] == "cbcl_scr_syn_external_r" & all.pats[,2] == "cbcl_scr_syn_internal_r" & all.pats[,3] == 1)]]
-fig.two <- out.plots2[[which(all.pats[,1] == "cbcl_scr_syn_external_r" & all.pats[,2] == "cbcl_scr_syn_thought_r" & all.pats[,3] == 1)]]
-fig.thr <- out.plots2[[which(all.pats[,1] == "cbcl_scr_syn_external_r" & all.pats[,2] == "cbcl_scr_syn_attention_r" & all.pats[,3] == 1)]]
-fig.fou <- out.plots2[[which(all.pats[,1] == "cbcl_scr_syn_internal_r" & all.pats[,2] == "cbcl_scr_syn_thought_r" & all.pats[,3] == 1)]]
-fig.fiv <- out.plots2[[which(all.pats[,1] == "cbcl_scr_syn_internal_r" & all.pats[,2] == "cbcl_scr_syn_attention_r" & all.pats[,3] == 1)]]
+fig.one <- out.plots[[1]]
+fig.two <- out.plots[[2]]
+fig.oneL <- out.plots2[[1]]
+fig.twoL <- out.plots2[[2]]
+
 
 ## Now modify the figures ranges here
 fig.one <- fig.one +theme_bw() + coord_cartesian(ylim=c(0,5)) + xlab("Internal") + ylab("log(External)") + theme(legend.position = "NULL") + ggtitle(NULL)
@@ -143,8 +149,6 @@ fig.one <- fig.one + geom_rect(aes(xmin=12, xmax=Inf, ymin=-Inf, ymax=+Inf),fill
 fig.one <- fig.one + geom_rect(aes(xmin=16.5, xmax=Inf, ymin=-Inf, ymax=+Inf),fill='red', alpha=0.01)
 fig.one <- fig.one + geom_rect(aes(xmin=-Inf, xmax=Inf, ymin=log(12), ymax=+Inf),fill='yellow', alpha=0.01)
 fig.one <- fig.one + geom_rect(aes(xmin=-Inf, xmax=Inf, ymin=log(16.5), ymax=+Inf),fill='red', alpha=0.01)
-
-
 
 ## Now do the same for the raw units
 fig.oner <- out.plots[[which(all.pats[,1] == "cbcl_scr_syn_external_r" & all.pats[,2] == "cbcl_scr_syn_internal_r" & all.pats[,3] == 1)]]

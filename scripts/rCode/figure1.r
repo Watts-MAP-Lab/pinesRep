@@ -339,3 +339,46 @@ r3 <- ggarrange(p3, t2, t3, nrow=3)
 out.plot <- ggarrange(r1, r2, r3, ncol = 3)
 ggsave(filename = "./reports/figure1.png", dpi=300, height = 8, width = 9, plot=out.plot)
 ggsave(filename = "~/Downloads/figure1.png", dpi=300, height = 8, width = 9, plot=out.plot)
+
+
+## NOw plot all of the parameters from the four various esimation techniques
+## Start with the linear models
+m1 <- summary(mod.base)$fixed[,"Estimate"]
+m2 <- summary(mod.baseNR)$fixed[,"Estimate"]
+m3 <- summary(mod.baseLin)$fixed[,"Estimate"]
+m4 <- summary(mod.baseLinNR)$fixed[,"Estimate"]
+plot.dat <- data.frame(parameters=c("Intercept", "Internal", "interview_age"), randNB=m1, fixedNB=m2, randGaus=m3, fixedGaus=m4)
+plot.datBase <- reshape2::melt(plot.dat)
+p4 <- ggplot(plot.datBase, aes(x=variable, y=value)) +
+  geom_bar(stat="identity") +
+  facet_wrap(parameters ~ .,scales="free")
+
+
+## NOw do the 1-cp models
+m1 <- summary(mod.1cp)$summary[c("a1", "a2", "b1", "b2", "b3", "alpha"),"mean"]
+m2 <- summary(mod.1cpFE)$summary[c("a1", "a2", "b1", "b2", "b3", "alpha"),"mean"]
+m3 <- summary(mod.1cpREG)$summary[c("a1", "a2", "b1", "b2", "b3", "alpha"),"mean"]
+m4 <- summary(mod.1cpFEG)$summary[c("a1", "a2", "b1", "b2", "b3", "alpha"),"mean"]
+plot.dat <- data.frame(parameters=c("Intercept1", "Intercept2","Slope1", "Slope2", "SlopeAge", "CP"), randNB=m1, fixedNB=m2, randGaus=m3, fixedGaus=m4)
+plot.dat[6,2:5] <- plot.dat[6,2:5] / 6
+plot.dat1CP <- reshape2::melt(plot.dat)
+p5 <- ggplot(plot.dat1CP, aes(x=variable, y=value)) +
+  geom_bar(stat="identity") +
+  facet_wrap(parameters ~ .,scales="free")
+
+## And finally 2-cp models
+m1 <- summary(mod.2)$summary[c("a1", "a2", "a3","b1", "b2", "b3", "b4", "alpha[1]", "alpha[2]"),"mean"]
+m2 <- summary(mod.2FE)$summary[c("a1", "a2", "a3","b1", "b2", "b3", "b4", "alpha[1]", "alpha[2]"),"mean"]
+m3 <- summary(mod.2REGaus)$summary[c("a1", "a2", "a3","b1", "b2", "b3", "b4", "alpha[1]", "alpha[2]"),"mean"]
+m4 <- summary(mod.2FEGaus)$summary[c("a1", "a2", "a3","b1", "b2", "b3", "b4", "alpha[1]", "alpha[2]"),"mean"]
+plot.dat <- data.frame(parameters=c("Intercept1", "Intercept2","Intercept3","Slope1", "Slope2", "SlopeAge","Slope3", "CP1", "CP2"), randNB=m1, fixedNB=m2, randGaus=m3, fixedGaus=m4)
+plot.dat[8:9,2:5] <- plot.dat[8:9,2:5] / 6
+plot.dat[7,2:5] <- plot.dat[7,2:5] + plot.dat[5,2:5]
+plot.dat2CP <- reshape2::melt(plot.dat)
+p6 <- ggplot(plot.dat2CP, aes(x=variable, y=value)) +
+  geom_bar(stat="identity") +
+  facet_wrap(parameters ~ .,scales="free")
+
+
+## Now put all of these together
+ggarrange(p4, p5, p6, nrow=3)
