@@ -1,8 +1,8 @@
 ## This script will be used to run all of the 
-## bayesian cp models for the pfactor-nonlinear manuscript
+## Bayesian cp models for the pfactor-nonlinear manuscript
 
 ## load library(s)
-library(doParallel)
+#library(doParallel)
 library(rstan)
 
 ## Decalre functions
@@ -80,38 +80,17 @@ data_jags <- list(
   N_group = as.numeric(factor(tmp.dat$site_id_l)),
   count_group = length(unique(as.numeric(factor(tmp.dat$site_id_l)))),
   N_group2 = as.numeric(factor(tmp.dat$rel_family_id)),
-  count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id)))),
-  beta = -5
+  count_group2 = length(unique(as.numeric(factor(tmp.dat$rel_family_id))))
 )
-# library(lme4)
-# for.glmer <- dplyr::bind_cols(data_jags)
-# mod.one <- glmer.nb(y ~ x + x2 + (1|N_group / N_group2), data = for.glmer)
-# qqnorm(residuals(mod.one))
-# qqline(residuals(mod.one),col=2)
-# mod.two <- glmer(y ~ x + x2 + (1|N_group2 / N_group), data = for.glmer, family="poisson")
-# qqnorm(residuals(mod.two))
-# qqline(residuals(mod.two),col=2)
-# mod.thr <- brm(
-#   y ~ x +
-#     x2 +
-#     (1|N_group2 / N_group),
-#   data = for.glmer,
-#   family = negbinomial(link = "log", link_shape = "log"),
-#   cores = 4)
-# denom.vec <- c(apply(in.dat[,126:136], 2, function(x) range(x, na.rm=TRUE)[2]))
-# lcm_vector <- function(x) Reduce(Lcm, x)
-# lcm_vector(c(20,50,75))
-# lcm_vector(denom.vec)
 
 ## Now make the scaled values here
 all.dat <- data_jags
-stanmonitor <- c("a1","a2","b1","b2","b3","alpha","sigma_p", "sigma_p2", "phi")
 file.out <- paste("./data/brmsModsOut/model_rawX_NB_allmods_", rowID, ".RDS", sep='')
 if(!file.exists(file.out)){
-  result_case = stan(file="./scripts/stan_models/updatedMultilevelInvLogit.stan", 
-                     data = all.dat, cores=2,chains=2,
-                     pars = stanmonitor, 
-                     iter=30000, warmup = 15000, thin = 5, control = list(max_treedepth=11))
+  result_case = stan(file="./scripts/stan_models/quick_cp_test.stan", 
+                     data = all.dat, cores=2,chains=2, refresh = 500, 
+                     #pars = stanmonitor, 
+                     iter=6000, warmup = 2000, thin = 3, control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
