@@ -13,12 +13,13 @@ data {
 // The parameters accepted by the model. Our model
 // accepts two parameters 'mu' and 'sigma'.
 parameters {
-    vector[2] alpha;
-    vector[3] beta;
-    vector[count_group] aa1;
-    vector[count_group2] aa2;
+    vector[2] alpha; // intercepts
+    vector[3] beta; // slopes
+    vector[count_group] aa1; // random intercept site
+    vector[count_group2] aa2; // random intercept family
     real<lower=0> sigma_p; // sd for intercept global
     real<lower=0> sigma_p2; // sd for intercept global
+    real<lower=0> phi; //neg binomvar
     real<lower=0, upper=max(x)> r; // change point with implicit uniform prior
 }
 
@@ -29,6 +30,7 @@ model {
   beta[1] ~ normal(0,1);
   beta[2] ~ normal(0,1);
   beta[3] ~ normal(0,1);
+  phi ~ uniform(0, 500);
   vector[N] mu;
   for (n in 1:N) {
     mu[n] = x[n] < r 
@@ -37,5 +39,6 @@ model {
   }
   aa1 ~ normal(0,sigma_p);
   aa2 ~ normal(0,sigma_p2);
-  y ~ poisson_log(mu);
+  //y ~ poisson_log(mu);
+  y ~ neg_binomial_2_log(mu, phi);
 }
