@@ -43,7 +43,7 @@ model {
   aa1 ~ normal(0,sigma_p);
   aa2 ~ normal(0,sigma_p2);
   //y ~ poisson_log(mu);
-  y ~ neg_binomial_2_log(mu, phi);
+  y ~ normal(mu, phi);
 }
 
 generated quantities {
@@ -56,6 +56,6 @@ generated quantities {
          alpha[3] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[3] * x[n] + beta[4] * x2[n]);
   }
   for (n in 1:N) { 
-    log_lik[n] = neg_binomial_2_log_lpmf(y[n] | mu[n], phi);
+    log_lik[n] = normal_lpdf(y[n] | mu[n], phi);
   }
 }

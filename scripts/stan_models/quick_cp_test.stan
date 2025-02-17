@@ -42,3 +42,16 @@ model {
   //y ~ poisson_log(mu);
   y ~ neg_binomial_2_log(mu, phi);
 }
+
+generated quantities {
+  vector[N] log_lik;
+  vector[N] mu;
+  for (n in 1:N) { 
+    mu[n] = x[n] < r 
+        ? alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[3] * x2[n]
+        : alpha[2] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[2] * x[n] + beta[3] * x2[n];
+  }
+  for (n in 1:N) { 
+    log_lik[n] = neg_binomial_2_log_lpmf(y[n] | mu[n], phi);
+  }
+}
