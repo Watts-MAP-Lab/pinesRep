@@ -3,10 +3,10 @@
 #SBATCH --mem=6G
 #SBATCH --nodes=1
 #SBATCH --ntasks=2
-#SBATCH --output=./outputTextRaw2/r_output_%J_%a.txt
-#SBATCH --error=./errorTextRaw2/r_error_%J_%a.txt
+#SBATCH --output=./outputTextRaw0/r_output_%J_%a.txt
+#SBATCH --error=./errorTextRaw0/r_error_%J_%a.txt
 #SBATCH --time=36:00:00
-#SBATCH --job-name=change_point_bayes
+#SBATCH --job-name=no_change_point_bayes
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
@@ -21,7 +21,7 @@ echo ${SLURM_ARRAY_TASK_ID}
 echo "Submitting job"
 date
 start=`date +%s`
-Rscript ./scripts/rCode/sysCallRaw2.r ${SLURM_ARRAY_TASK_ID}
+Rscript ./scripts/rCode/sysCallRaw0.r ${SLURM_ARRAY_TASK_ID}
 end=`date +%s`
 runtime=$((end-start))
 date
