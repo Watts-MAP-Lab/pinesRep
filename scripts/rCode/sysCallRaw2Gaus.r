@@ -85,10 +85,10 @@ data_jags <- list(
 
 ## Now make the scaled values here
 all.dat <- data_jags
-file.out <- paste("./data/brmsModsOut/model_rawX_NB_2CP_allmods_", rowID, ".RDS", sep='')
+file.out <- paste("./data/brmsModsOut/model_rawX_GAUS_2CP_allmods_", rowID, ".RDS", sep='')
 stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik")
 if(!file.exists(file.out)){
-  result_case = stan(file="./scripts/stan_models/quick_2cp_test.stan", 
+  result_case = stan(file="./scripts/stan_models/quick_2cp_test_gaussian.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
                      pars = stanmonitor, 
                      iter=15000, warmup = 5000, control = list(max_treedepth=9))

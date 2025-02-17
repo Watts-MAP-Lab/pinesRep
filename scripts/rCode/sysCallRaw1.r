@@ -5,7 +5,7 @@
 #library(doParallel)
 library(rstan)
 
-## Decalre functions
+## Declare functions
 range01 <- function(x, minVal=NULL, maxVal=NULL, ...){
   # Now make sure we have some standard deviation
   if(is.na(sd(x, na.rm=T))){
@@ -85,17 +85,14 @@ data_jags <- list(
 
 ## Now make the scaled values here
 all.dat <- data_jags
-file.out <- paste("./data/brmsModsOut/model_rawX_NB_2CP_allmods_", rowID, ".RDS", sep='')
+file.out <- paste("./data/brmsModsOut/model_rawX_NB_1CP_allmods_", rowID, ".RDS", sep='')
 stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik")
 if(!file.exists(file.out)){
-  result_case = stan(file="./scripts/stan_models/quick_2cp_test.stan", 
+  result_case = stan(file="./scripts/stan_models/quick_cp_test.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
                      pars = stanmonitor, 
                      iter=15000, warmup = 5000, control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
-  summary(do.call(rbind, 
-                  args = get_sampler_params(result_case, inc_warmup = FALSE)),
-          digits = 2)
 }else{
   print("Done")
 }

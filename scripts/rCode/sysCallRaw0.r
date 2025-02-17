@@ -5,7 +5,7 @@
 #library(doParallel)
 library(rstan)
 
-## Decalre functions
+## Declare functions
 range01 <- function(x, minVal=NULL, maxVal=NULL, ...){
   # Now make sure we have some standard deviation
   if(is.na(sd(x, na.rm=T))){
@@ -37,8 +37,6 @@ range01 <- function(x, minVal=NULL, maxVal=NULL, ...){
   }
   (x-minVal)/diff(c(minVal, maxVal))
 }
-
-
 
 # Now run through all of these model options in a for parallel loop
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_internal_r", "cbcl_scr_syn_thought_r", "cbcl_scr_syn_anxdep_r", "cbcl_scr_syn_withdep_r", "cbcl_scr_syn_somatic_r", "cbcl_scr_syn_aggressive_r", "cbcl_scr_syn_rulebreak_r")
@@ -85,19 +83,17 @@ data_jags <- list(
 
 ## Now make the scaled values here
 all.dat <- data_jags
-file.out <- paste("./data/brmsModsOut/model_rawX_NB_2CP_allmods_", rowID, ".RDS", sep='')
-stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik")
+file.out <- paste("./data/brmsModsOut/model_rawX_NB_NOCP_allmods_", rowID, ".RDS", sep='')
+stanmonitor = c("alpha", "beta", "phi", "sigma_p", "sigma_p2", "log_lik")
 if(!file.exists(file.out)){
-  result_case = stan(file="./scripts/stan_models/quick_2cp_test.stan", 
+  result_case = stan(file="./scripts/stan_models/quick_c0_test.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
                      pars = stanmonitor, 
                      iter=15000, warmup = 5000, control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
-  summary(do.call(rbind, 
-                  args = get_sampler_params(result_case, inc_warmup = FALSE)),
-          digits = 2)
 }else{
   print("Done")
+  result_case <- readRDS(file.out)
 }
 
 summary(do.call(rbind, 
