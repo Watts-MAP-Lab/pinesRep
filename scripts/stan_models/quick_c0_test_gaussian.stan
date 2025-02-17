@@ -20,7 +20,6 @@ parameters {
     real<lower=0> sigma_p; // sd for intercept global
     real<lower=0> sigma_p2; // sd for intercept global
     real<lower=0> phi; //neg binomvar
-    real<lower=0, upper=max(x)> r; // change point with implicit uniform prior
 }
 
 // The model to be estimated.
@@ -31,7 +30,7 @@ model {
   phi ~ uniform(0, 500);
   vector[N] mu;
   for (n in 1:N) {
-    mu[n] = alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[3] * x2[n];
+    mu[n] = alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[2] * x2[n];
   }
   aa1 ~ normal(0,sigma_p);
   aa2 ~ normal(0,sigma_p2);
