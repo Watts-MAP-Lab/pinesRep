@@ -5,43 +5,8 @@
 #library(doParallel)
 library(rstan)
 
-## Declare functions
-range01 <- function(x, minVal=NULL, maxVal=NULL, ...){
-  # Now make sure we have some standard deviation
-  if(is.na(sd(x, na.rm=T))){
-    output <- rep(1, length(x))
-    return(output)
-  }
-  if (sd(x, na.rm=T)==0 ){
-    output <- rep(1, length(x))
-    return(output)
-  }
-  # Now see if we are provided a max and min val
-  diffFlag <- 1
-  bothCheck <- 2
-  if(identical(NULL, minVal)){
-    minVal <- min(x, na.rm=T)
-    bothCheck <- bothCheck - 1
-    diffFlag <- 0
-  }
-  if(identical(NULL, maxVal)){
-    #print('foo')
-    maxVal <- max(x, na.rm=T)
-    bothCheck <- bothCheck - 1
-    diffFlag <- 0
-  }
-  if(diffFlag==0 & bothCheck!=0){
-    print(diffFlag)
-    print(bothCheck)
-    warning("Only one min or max value provided use caution!!")
-  }
-  (x-minVal)/diff(c(minVal, maxVal))
-}
-
-
-
 # Now run through all of these model options in a for parallel loop
-mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_internal_r", "cbcl_scr_syn_thought_r", "cbcl_scr_syn_anxdep_r", "cbcl_scr_syn_withdep_r", "cbcl_scr_syn_somatic_r", "cbcl_scr_syn_aggressive_r", "cbcl_scr_syn_rulebreak_r")
+mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
 mod.iv <- mod.dv
 iter <- 1:4
 all.mods <- expand.grid(mod.dv, mod.iv, iter)
