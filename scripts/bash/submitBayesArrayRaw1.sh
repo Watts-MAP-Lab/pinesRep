@@ -10,8 +10,7 @@
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
-#SBATCH --array=1-288
-#SBATCH --array=1,2,3,9,10,11,17,18,19,25,26,27,73,74,75,81,82,83,89,90,91,97,98,99,145,146,147,153,154,155,161,162,163,169,170,171,217,218,219,225,226,227,233,234,235,241,242,243
+#SBATCH --array=1-48
 
 module purge
 setup_accre_software_stack
