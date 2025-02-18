@@ -20,7 +20,7 @@ echo ${SLURM_ARRAY_TASK_ID}
 echo "Submitting job"
 date
 start=`date +%s`
-Rscript ./scripts/rCode/sysCallRaw0Gaus.r ${SLURM_ARRAY_TASK_ID}
+Rscript ./scripts/rCode/sysCall0Gaus.r ${SLURM_ARRAY_TASK_ID}
 end=`date +%s`
 runtime=$((end-start))
 date
