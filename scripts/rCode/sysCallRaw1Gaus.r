@@ -6,6 +6,8 @@
 library(rstan)
 # Now run through all of these model options in a for parallel loop
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
+mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")#, "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
+
 mod.iv <- mod.dv
 iter <- 1:4
 all.mods <- expand.grid(mod.dv, mod.iv, iter)
