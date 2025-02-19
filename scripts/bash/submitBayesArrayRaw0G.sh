@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --mem=8G
+#SBATCH --mem=12G
 #SBATCH --nodes=1
 #SBATCH --ntasks=2
 #SBATCH --output=./outputTextRaw0G/r_output_%J_%a.txt
@@ -10,7 +10,7 @@
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
-#SBATCH --array=1-48
+#SBATCH --array=1-8
 
 module purge
 setup_accre_software_stack
