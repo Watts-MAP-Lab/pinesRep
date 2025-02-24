@@ -57,8 +57,8 @@ stanmonitor = c("alpha", "beta", "phi", "sigma_p", "sigma_p2", "log_lik")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_c0_test_gaussian.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
-                     pars = stanmonitor, 
-                     iter=15000, warmup = 5000, control = list(max_treedepth=9))
+                     #pars = stanmonitor, 
+                     iter=5000, warmup = 3000, control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
@@ -69,4 +69,4 @@ summary(do.call(rbind,
                 args = get_sampler_params(result_case, inc_warmup = FALSE)),
         digits = 2)
 ## Now do the logLik loo call here
-loo::elpd(result_case)
+rstan::loo(result_case)

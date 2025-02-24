@@ -5,7 +5,7 @@
 #library(doParallel)
 library(rstan)
 
-## Decalre functions
+## Declare functions
 range01 <- function(x, minVal=NULL, maxVal=NULL, ...){
   # Now make sure we have some standard deviation
   if(is.na(sd(x, na.rm=T))){
@@ -86,12 +86,12 @@ data_jags <- list(
 ## Now make the scaled values here
 all.dat <- data_jags
 file.out <- paste("./data/brmsModsOut/model_rawX_NB_allmods_", rowID, ".RDS", sep='')
-stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2")
+stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_cp_test.stan", 
-                     data = all.dat, cores=2,chains=2, refresh = 500, 
+                     data = all.dat, cores=2,chains=2, refresh = 10, 
                      pars = stanmonitor, 
-                     iter=50000, warmup = 10000, thin = 10, control = list(max_treedepth=9))
+                     iter=200, warmup = 100, control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
@@ -100,3 +100,5 @@ if(!file.exists(file.out)){
 summary(do.call(rbind, 
                 args = get_sampler_params(result_case, inc_warmup = FALSE)),
         digits = 2)
+## Now do the logLik loo call here
+loo::elpd()

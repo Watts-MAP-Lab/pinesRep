@@ -9,7 +9,6 @@ library(rstan)
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_internal_r", "cbcl_scr_syn_thought_r", "cbcl_scr_syn_anxdep_r", "cbcl_scr_syn_withdep_r", "cbcl_scr_syn_somatic_r", "cbcl_scr_syn_aggressive_r", "cbcl_scr_syn_rulebreak_r")
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")#, "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
-
 mod.iv <- mod.dv
 iter <- 1:4
 all.mods <- expand.grid(mod.dv, mod.iv, iter)
@@ -54,12 +53,12 @@ data_jags <- list(
 ## Now make the scaled values here
 all.dat <- data_jags
 file.out <- paste("./data/brmsModsOut/model_rawX_NB_NOCP_allmods_", rowID, ".RDS", sep='')
-stanmonitor = c("alpha", "beta", "phi", "sigma_p", "sigma_p2", "log_lik")
+stanmonitor = c("alpha", "beta", "phi", "sigma_p", "sigma_p2", "log_lik", "mu")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_c0_test.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
-                     pars = stanmonitor, 
-                     iter=15000, warmup = 5000, control = list(max_treedepth=9))
+                     #pars = stanmonitor, 
+                     iter=5000, warmup = 3000, control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
@@ -70,4 +69,4 @@ summary(do.call(rbind,
                 args = get_sampler_params(result_case, inc_warmup = FALSE)),
         digits = 2)
 ## Now do the logLik loo call here
-loo::elpd(result_case)
+rstan::loo(result_case)
