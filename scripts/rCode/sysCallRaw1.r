@@ -4,6 +4,7 @@
 ## load library(s)
 #library(doParallel)
 library(rstan)
+library(brms)
 
 # Now run through all of these model options in a for parallel loop
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
@@ -53,12 +54,12 @@ data_jags <- list(
 ## Now make the scaled values here
 all.dat <- data_jags
 file.out <- paste("./data/brmsModsOut/model_rawX_NB_1CP_allmods_", rowID, ".RDS", sep='')
-stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik")
+stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik","mu")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_cp_test.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
-                     #pars = stanmonitor, 
-                     iter=5000, warmup = 3000, control = list(max_treedepth=9))
+                     pars = stanmonitor, 
+                     iter=10000, warmup = 5000, thin=2,control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")

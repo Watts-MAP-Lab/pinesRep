@@ -34,11 +34,19 @@ model {
   beta[3] ~ normal(0,1);
   phi ~ uniform(0, 500);
   vector[N] mu;
+  vector[N] mu1;
+  vector[N] mu2;
+  vector[N] mu3;
   for (n in 1:N) {
-    mu[n] = x[n] < r[1] 
-        ? alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[4] * x2[n]
-        : (x[n] < r[2] ? alpha[2] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[2] * x[n] + beta[4] * x2[n] :
-         alpha[3] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[3] * x[n] + beta[4] * x2[n]);
+    mu1[n] = alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[4] * x2[n];
+    mu2[n] = alpha[2] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[2] * x[n] + beta[4] * x2[n];
+    mu3[n] = alpha[3] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[3] * x[n] + beta[4] * x2[n];
+    if (x[n] < r[2])
+      mu[n] = mu2[n];
+    else if (x[n] < r[1])
+      mu[n] = mu1[n];
+    else
+      mu[n] = mu3[n];
   }
   aa1 ~ normal(0,sigma_p);
   aa2 ~ normal(0,sigma_p2);
@@ -49,11 +57,19 @@ model {
 generated quantities {
   vector[N] log_lik;
   vector[N] mu;
+  vector[N] mu1;
+  vector[N] mu2;
+  vector[N] mu3;
   for (n in 1:N) {
-    mu[n] = x[n] < r[1] 
-        ? alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[4] * x2[n]
-        : (x[n] < r[2] ? alpha[2] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[2] * x[n] + beta[4] * x2[n] :
-         alpha[3] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[3] * x[n] + beta[4] * x2[n]);
+    mu1[n] = alpha[1] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[1] * x[n] + beta[4] * x2[n];
+    mu2[n] = alpha[2] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[2] * x[n] + beta[4] * x2[n];
+    mu3[n] = alpha[3] + aa1[N_group[n]]+aa2[N_group2[n]] + beta[3] * x[n] + beta[4] * x2[n];
+    if (x[n] < r[2])
+      mu[n] = mu2[n];
+    else if (x[n] < r[1])
+      mu[n] = mu1[n];
+    else
+      mu[n] = mu3[n];
   }
   for (n in 1:N) { 
     log_lik[n] = normal_lpdf(y[n] | mu[n], phi);

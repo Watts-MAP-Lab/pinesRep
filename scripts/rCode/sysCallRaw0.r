@@ -57,8 +57,8 @@ stanmonitor = c("alpha", "beta", "phi", "sigma_p", "sigma_p2", "log_lik", "mu")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_c0_test.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
-                     #pars = stanmonitor, 
-                     iter=5000, warmup = 3000, control = list(max_treedepth=9))
+                     pars = stanmonitor, 
+                     iter=10000, warmup = 5000, thin=2,control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
