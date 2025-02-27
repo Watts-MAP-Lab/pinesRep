@@ -1,0 +1,55 @@
+---
+title: "methodsPrep"
+author: "Adon Rosen"
+date: "`r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Methods
+
+### Study Design and Participants
+
+Data were composed of ABCD study waves 1-4 collected across 21 sites in the US between September 2016 and August 2020. Assessments of psychopathology were available across all four waves, waves were collected every year. EXCLUSION CRTIERA**. FURTHER BACKGROUND INFO**.
+
+### Assessment of Psychopathology
+
+Psychopathology was evaluated using the Child Behavioral Checklist (CBCL; [@achenbach2001]). The CBCL examines several higher-order domains of psychopathology including: internalizing and externalizing symptoms as well as thought and attention problems. Every higher-order domain is assessed by parents or caregivers and responses to questions are answered using a Likert scale ranging from zero (not present) through two (very often or true). Within-domain symptomology was assessed as the sum-score for all questions, higher sum-scores suggest greater symptomology.
+
+## Examination of Univaraite and Bivaraite Moments.
+
+The first set of analyses examines the moments of the higher-order sum-score symptomology. This required estimating the univaraite mean, variance, skewness, and kurtosis. These univaraite statistics were examined in a qualitative fashion; however, they can inform the extent these distributions deviate from a normal distribution. For example, a normal distributions skewness is 0, where positive values suggest a right-skewed data. Additionally, a distribution which is normal has a kurtosis value of 3, kurtosis values greater than three suggest the presence of more outliers than would be expected if the distribution were normal.
+
+The bivaraite moments examined include skewness and kurtosis [@mardia1970]. These moments can inform how the bivaraite relationships deviate from a theoretical multivaraite normal distribution. These bivaraite statistics can be interpreted in an equivalent fashion to the univaraite metrics. For example, the bivaraite skewness details the extent the data are skewed in a particular direction, and details the extent the data are evenly, or unevenly distributed. Additionally, using Mardia's methodology a chi-squared test can be performed to examine the extent the data do, or do not satisfy the assumptions of multivaraite normality for both skewness and kurtosis [@mardia1970].
+
+### Estimation of Bayesian Change Point Models
+
+Bayesian change point models (BCP) were estimated across all higher-order symptomology endorsements. These change point models have other common names including broken-stick models [@buuren2023], turning points [@mcardle2008], or break point models [@muggeo2008]. These models are most commonly applied in the analysis of univarite time series data; however, as recent extensions have seen them become more popular in the analysis of multivariate time series [@brilleman2017]. Additionally, these models are used routinely in ecology to identify transitions in animal behavior [@gundermann2023] and environmental thresholds [@qian2003] in cross-sectional data.
+
+The motivation of these analyses were to identify if and when nonlinear patterns between higher-order psychopathology constructs exists. The BCP model identifies locations along the independent variable where an alternative model may better fit the dependent variable. Several candidates were examined including a 0-, 1-, and 2-change point alternatives. Additionally two link functions were examined, a Gaussian, and a Poisson link. The Gaussian was motivated by it's popularity across literature, and a Poisson was used given the count nature of the symptom data.
+
+A 1-change point model adheres to the following structure:
+
+$$
+y_i =
+\begin{cases}
+ \alpha_1+\beta_1 X ,& x<\tau_r \\
+ \alpha_2+\beta_2 X  ,& x\geq\tau_r
+ \end{cases}       
+$$
+
+Where $\alpha$ and $\beta$ terms are the intercept and slope terms respectively The $\rho$ term represents the location of the change point. The number of change points can range from $0$ to $\inf$. Importantly, given that this is a combination of two GLM models, these models easily extend to include random effects as well as additional linear predictors. The variables of interest from these model include the location of the location of the change point, the magnitudes of the pre- and post-change point slopes and intercepts. All models estimated included nested random effects for family within site, as well as controlling for the participants age. All data were modeled using the raw symptom count.
+
+All models were estimated using diffuse and naive priors. If a change point was identified the posterior distribution would centralize to a specific location, if a change point was not identified the posterior distribution would return the prior distribution. Model convergence was examined using the potential scale reduction factor $\hat{R}$ [@gelman1992] as well as visual inspection of trace and autocorrelation plots. All sampling was performed using the STAN language using the No U-turn Sampler (NUTS) algorithm [@homan2014; @standevelopmentteam2023].
+
+### Model Comparison
+
+Model selection was performed using the Leave-one-out Infomration Criterion (LOOIC), which ican be employed for both model selection across Bayesian models [@vehtari2017]. This information criterion allows for the comparison of models both within and across link functions (Gaussian versus Negative Binomial). The LOOIC provides utilities equivalent to the commonly applied AIC and BIC in that the value details how well the model fits the data as a function of prediction error. Lower values of LOOIC detail better fitting model.
+
+### 
