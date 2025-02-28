@@ -1,16 +1,16 @@
 #!/bin/bash
 #
-#SBATCH --mem=12G
+#SBATCH --mem=16G
 #SBATCH --nodes=1
-#SBATCH --ntasks=2
+#SBATCH --ntasks=3
 #SBATCH --output=./outputTextRaw2/r_output_%J_%a.txt
 #SBATCH --error=./errorTextRaw2/r_error_%J_%a.txt
-#SBATCH --time=36:00:00
+#SBATCH --time=60:00:00
 #SBATCH --job-name=change_point_bayes
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
-#SBATCH --array=1-8
+#SBATCH --array=1-48
 
 module purge
 setup_accre_software_stack

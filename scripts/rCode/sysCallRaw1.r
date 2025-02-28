@@ -4,11 +4,13 @@
 ## load library(s)
 #library(doParallel)
 library(rstan)
-library(brms)
+library(bayesplot)
+library(loo)
+
 
 # Now run through all of these model options in a for parallel loop
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
-mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")#, "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
+#mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")#, "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
 
 mod.iv <- mod.dv
 iter <- 1:4
@@ -52,21 +54,36 @@ data_jags <- list(
 )
 
 ## Now make the scaled values here
-all.dat <- data_jags
+#all.dat <- data_jags
 file.out <- paste("./data/brmsModsOut/model_rawX_NB_1CP_allmods_", rowID, ".RDS", sep='')
 stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik","mu")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_cp_test.stan", 
-                     data = all.dat, cores=2,chains=2, refresh = 100, 
+                     data = data_jags, cores=3,chains=3, refresh = 100, 
                      pars = stanmonitor, 
-                     iter=10000, warmup = 5000, thin=2,control = list(max_treedepth=9))
-  saveRDS(result_case, file.out)
+                     iter=40000, warmup = 20000, thin = 2,control = list(max_treedepth=9))
+  #saveRDS(result_case, file.out)
+  print("Model estimation done")
 }else{
   print("Done")
 }
 
-summary(do.call(rbind, 
-                args = get_sampler_params(result_case, inc_warmup = FALSE)),
-        digits = 2)
-## Now do the logLik loo call here
-rstan::loo(result_case)
+## Now estimate model prediction values here as well as LOOIC values
+summary.vals <- rstan::summary(result_case)$summary
+pred.vals <- summary.vals[grep(x = rownames(summary.vals), pattern = "mu"),]
+rm.index <- which(exp(pred.vals[,"mean"])>50)
+out.cor <- cor(exp(pred.vals[-rm.index,"mean"]), data_jags$y[-rm.index], method="s")
+log_lik6 <- extract_log_lik(result_case)
+out.looic <- loo::loo(log_lik6, moment_match = TRUE)
+## Now create all of the figure values
+iter.vals <- c("alpha[1]", "alpha[2]", "beta[1]", "beta[2]", "beta[3]", "r")
+file.out2 <- paste("./data/outPlot/brmsModsOut/tracePlot_NB_1CP_", rowID, ".RDS", sep='')
+pdf(file.out2)
+for(i in iter.vals){
+  print(bayesplot::mcmc_trace(result_case, i))
+}
+dev.off()
+out.list <- list(mod.cor = out.cor,
+                 out.sum = summary.vals,
+                 out.looic = out.looic)
+saveRDS(out.list, file.out)

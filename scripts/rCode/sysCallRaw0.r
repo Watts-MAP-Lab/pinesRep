@@ -2,13 +2,14 @@
 ## Bayesian cp models for the pfactor-nonlinear manuscript
 
 ## load library(s)
-#library(doParallel)
 library(rstan)
+library(bayesplot)
+library(loo)
 
 # Now run through all of these model options in a for parallel loop
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_internal_r", "cbcl_scr_syn_thought_r", "cbcl_scr_syn_anxdep_r", "cbcl_scr_syn_withdep_r", "cbcl_scr_syn_somatic_r", "cbcl_scr_syn_aggressive_r", "cbcl_scr_syn_rulebreak_r")
 mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
-mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")#, "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
+#mod.dv <- c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r")#, "cbcl_scr_syn_attention_r", "cbcl_scr_syn_thought_r")
 mod.iv <- mod.dv
 iter <- 1:4
 all.mods <- expand.grid(mod.dv, mod.iv, iter)
@@ -58,15 +59,28 @@ if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_c0_test.stan", 
                      data = all.dat, cores=2,chains=2, refresh = 100, 
                      pars = stanmonitor, 
-                     iter=10000, warmup = 5000, thin=2,control = list(max_treedepth=9))
+                     iter=40000, warmup = 20000, thin = 2,control = list(max_treedepth=9))
   saveRDS(result_case, file.out)
 }else{
   print("Done")
   result_case <- readRDS(file.out)
 }
 
-summary(do.call(rbind, 
-                args = get_sampler_params(result_case, inc_warmup = FALSE)),
-        digits = 2)
-## Now do the logLik loo call here
-rstan::loo(result_case)
+summary.vals <- rstan::summary(result_case)$summary
+pred.vals <- summary.vals[grep(x = rownames(summary.vals), pattern = "mu"),]
+rm.index <- which(exp(pred.vals[,"mean"])>40)
+out.cor <- cor(exp(pred.vals[-rm.index,"mean"]), data_jags$y[-rm.index], method="s")
+log_lik6 <- extract_log_lik(result_case)
+out.looic <- loo::loo(log_lik6, moment_match = TRUE)
+## Now create all of the figure values
+iter.vals <- c("alpha[1]", "beta[1]", "beta[2]")
+file.out2 <- paste("./data/outPlot/brmsModsOut/tracePlot_NB_NOCP_", rowID, ".RDS", sep='')
+pdf(file.out2)
+for(i in iter.vals){
+  print(bayesplot::mcmc_trace(result_case, i))
+}
+dev.off()
+out.list <- list(mod.cor = out.cor,
+                 out.sum = summary.vals,
+                 out.looic = out.looic)
+saveRDS(out.list, file.out)
