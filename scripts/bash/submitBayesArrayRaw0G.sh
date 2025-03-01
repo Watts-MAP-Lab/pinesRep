@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --mem=16G
+#SBATCH --mem=24G
 #SBATCH --nodes=1
 #SBATCH --ntasks=3
 #SBATCH --output=./outputTextRaw0G/r_output_%J_%a.txt
