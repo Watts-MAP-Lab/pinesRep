@@ -7,7 +7,13 @@ data {
   vector[N] x2;                   // age predictor
   int N_group[N];                 // group membership vector 1
   int N_group2[N];                // group membership vector 2
+}
 
+transformed data{
+    real<lower=0> a;
+    real<lower=0> b;
+    a <- min(x);
+    b <- max(x);
 }
 
 // The parameters accepted by the model. Our model
@@ -20,8 +26,14 @@ parameters {
     real<lower=0> sigma_p; // sd for intercept global
     real<lower=0> sigma_p2; // sd for intercept global
     real<lower=0> phi; //neg binomvar
-    positive_ordered[2] r; // change point with implicit uniform prior
+    simplex[2] pi;
+	  simplex[3] theta;
 }
+transformed parameters{
+    positive_ordered[2] r; 
+    r <- a + head(cumulative_sum(theta), 2) * (b - a); 
+}
+
 
 // The model to be estimated.
 model {

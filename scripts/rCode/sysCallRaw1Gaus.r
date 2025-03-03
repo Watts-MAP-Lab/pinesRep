@@ -59,7 +59,7 @@ if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_cp_test_gaussian.stan", 
                      data = all.dat, cores=3,chains=3, refresh = 100, 
                      pars = stanmonitor, 
-                     iter=40000, warmup = 20000, thin = 2,control = list(max_treedepth=9))
+                     iter=20000, warmup = 10000, thin = 2,control = list(max_treedepth=9))
   #saveRDS(result_case, file.out)
 }else{
   print("Done")
@@ -72,7 +72,7 @@ log_lik6 <- extract_log_lik(result_case)
 out.looic <- loo::loo(log_lik6, moment_match = TRUE)
 ## Now create all of the figure values
 iter.vals <- c("alpha[1]", "alpha[2]", "beta[1]", "beta[2]", "beta[3]", "r")
-file.out2 <- paste("./data/outPlot/tracePlot_GAUS_1CP_", rowID, ".RDS", sep='')
+file.out2 <- paste("./data/outPlot/tracePlot_GAUS_1CP_", rowID, ".pdf", sep='')
 pdf(file.out2)
 for(i in iter.vals){
   print(bayesplot::mcmc_trace(result_case, i))
