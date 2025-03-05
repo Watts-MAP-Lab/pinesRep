@@ -54,13 +54,13 @@ data_jags <- list(
 
 ## Now make the scaled values here
 #all.dat <- data_jags
-file.out <- paste("./data/brmsModsOut/model_rawX_NB_2CP_allmods_", rowID, ".RDS", sep='')
+file.out <- paste("./data/brmsModsOut/modelAGG_rawX_NB_2CP_allmods_", rowID, ".RDS", sep='')
 stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik", "mu")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/quick_2cp_test.stan", 
-                     data = data_jags, cores=3,chains=3, refresh = 100, 
+                     data = data_jags, cores=3,chains=3, refresh = 1000, 
                      pars = stanmonitor, 
-                     iter=20000, warmup = 10000, thin = 2,control = list(max_treedepth=9))
+                     iter=65000, warmup = 50000, thin = 3,control = list(max_treedepth=9))
   #saveRDS(result_case, file.out)
   summary(do.call(rbind, 
                   args = get_sampler_params(result_case, inc_warmup = FALSE)),

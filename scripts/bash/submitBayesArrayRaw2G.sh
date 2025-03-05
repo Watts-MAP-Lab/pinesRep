@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-#SBATCH --mem=24G
+#SBATCH --mem=32G
 #SBATCH --nodes=1
 #SBATCH --ntasks=3
 #SBATCH --output=./outputTextRaw2G/r_output_%J_%a.txt
 #SBATCH --error=./errorTextRaw2G/r_error_%J_%a.txt
-#SBATCH --time=60:00:00
-#SBATCH --job-name=change_point_bayes
+#SBATCH --time=100:00:00
+#SBATCH --job-name=twoGaus_change_point
 #SBATCH --mail-user=adon.rosen@vanderbilt.edu
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
