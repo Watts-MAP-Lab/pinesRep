@@ -73,13 +73,13 @@ out.cor <- cor(pred.vals[,"mean"], data_jags$y, method="s")
 log_lik6 <- extract_log_lik(result_case)
 out.looic <- loo::loo(log_lik6, moment_match = TRUE)
 ## Now create all of the figure values
-iter.vals <- c("alpha[1]", "alpha[2]", "beta[1]", "beta[2]", "beta[3]", "r[1]", "r[2]")
-file.out2 <- paste("./data/outPlot/tracePlot_GAUS_2CP_", rowID, ".pdf", sep='')
-pdf(file.out2)
-for(i in iter.vals){
-  print(bayesplot::mcmc_trace(result_case, i))
-}
-dev.off()
+# iter.vals <- c("alpha[1]", "alpha[2]", "beta[1]", "beta[2]", "beta[3]", "r[1]", "r[2]")
+# file.out2 <- paste("./data/outPlot/tracePlot_GAUS_2CP_", rowID, ".pdf", sep='')
+# pdf(file.out2)
+# for(i in iter.vals){
+#   print(bayesplot::mcmc_trace(result_case, i))
+# }
+# dev.off()
 out.list <- list(mod.cor = out.cor,
                  out.sum = summary.vals,
                  out.looic = out.looic)
