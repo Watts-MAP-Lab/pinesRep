@@ -21,9 +21,8 @@ parameters {
   vector[count_group2] aa2;
   real<lower=0> sigma_p; // sd for intercept global
   real<lower=0> sigma_p2; // sd for intercept global
-  real<lower=-1*beta, upper =-51*beta>  alpha;
+  real<lower=0, upper =51>  alpha;
   real<lower=0> phi; //neg binom added var
-
 }
 
 transformed parameters  {
@@ -44,7 +43,7 @@ model {
   b3 ~ normal(0,1);
   sigma_p ~ exponential(12);
   sigma_p2 ~ exponential(4);
-  alpha ~ normal(55,6);
+  //alpha ~ normal(55,6);
   phi ~ uniform(0, 500);
   
   // Likelihood part of Bayesian inference
@@ -52,4 +51,16 @@ model {
   aa2 ~ normal(0,sigma_p2);
   //y ~ poisson_log(lp);
   y ~ neg_binomial_2_log(lp, phi);
+}
+
+
+generated quantities {
+  vector[N] log_lik;
+  vector[N] mu;
+  for (j in 1:N) { 
+    mu[j] = w[j]*(a1+aa1[N_group[j]]+aa2[N_group2[j]]+b1*x[j]+b3*x2[j])+(1-w[j])*(a2+aa1[N_group[j]]+aa2[N_group2[j]]+b2*x[j]+b3*x2[j]);
+  }
+  for (n in 1:N) { 
+    log_lik[n] = neg_binomial_2_log_lpmf(y[n] | mu[n], phi);
+  }
 }

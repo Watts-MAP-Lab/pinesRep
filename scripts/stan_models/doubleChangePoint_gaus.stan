@@ -22,9 +22,10 @@ parameters {
   vector[count_group2] aa2; // random intercept for family
   real<lower=0> sigma_p; // sd for intercept global
   real<lower=0> sigma_p2; // sd for intercept global
+  positive_ordered[2] alpha; //  cp locations for ordered logit
+  real<lower=0> phi; //neg binom added var
   simplex[2] pi;
 	simplex[3] theta;
-  real<lower=0> phi; //neg binom added var
 }
 
 transformed data{
@@ -62,7 +63,8 @@ model {
   aa1 ~ normal(0,sigma_p);
   aa2 ~ normal(0,sigma_p2);
   //y ~ poisson_log(lp);
-  y ~ neg_binomial_2_log(lp, phi);
+  //y ~ neg_binomial_2_log(lp, phi);
+  y ~ normal(lp, phi);
 }
 
 generated quantities {

@@ -44,7 +44,6 @@ model {
   b3 ~ normal(0,1);
   sigma_p ~ exponential(12);
   sigma_p2 ~ exponential(4);
-  alpha ~ normal(55,6);
   phi ~ uniform(0, 500);
   
   // Likelihood part of Bayesian inference
@@ -53,4 +52,15 @@ model {
   //y ~ poisson_log(lp);
   //y ~ neg_binomial_2_log(lp, phi);
   y ~ normal(lp,phi);
+}
+
+generated quantities {
+  vector[N] log_lik;
+  vector[N] mu;
+  for (j in 1:N) { 
+    mu[j] = w[j]*(a1+aa1[N_group[j]]+aa2[N_group2[j]]+b1*x[j]+b3*x2[j])+(1-w[j])*(a2+aa1[N_group[j]]+aa2[N_group2[j]]+b2*x[j]+b3*x2[j]);
+  }
+  for (n in 1:N) { 
+    log_lik[n] = neg_binomial_2_log_lpmf(y[n] | mu[n], phi);
+  }
 }
