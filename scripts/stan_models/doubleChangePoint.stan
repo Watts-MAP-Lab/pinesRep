@@ -10,6 +10,14 @@ data {
   real beta;                      // fixed gain of logistic changepoint
 }
 
+transformed data{
+    real<lower=0> a;
+    real<lower=0> b;
+    a <- min(x);
+    b <- max(x);
+}
+
+
 parameters {
   real a1; // intercept model 1
   real a2; // intercept model 2
@@ -27,15 +35,11 @@ parameters {
   real<lower=0> phi; //neg binom added var
 }
 
-transformed data{
-    real<lower=0> a;
-    real<lower=0> b;
-    a <- min(x);
-    b <- max(x);
-}
 
-
-transformed parameters  {
+transformed parameters{
+  positive_ordered[2] alpha; 
+  alpha <- a + head(cumulative_sum(theta), 2) * (b - a); 
+  
   vector[N] w = inv_logit(alpha[1] + beta*x);
   vector[N] w2 = inv_logit(alpha[2] + beta*x);
   vector[N] lp;
@@ -43,8 +47,6 @@ transformed parameters  {
     lp[j] = w[j]*(a1+aa1[N_group[j]]+aa2[N_group2[j]]+b1*x[j]+b3*x2[j])+(1-w[j])*(a2+aa1[N_group[j]]+aa2[N_group2[j]]+b2*x[j]+b3*x2[j])+(1-w2[j])*(a3+aa1[N_group[j]]+aa2[N_group2[j]]+b4*x[j]+b3*x2[j]);
     //lp[j] = w[j]*(a1+b1*x[j])+(1-w[j])*(a2+b2*x[j])+(1-w2[j])*(a3+b4*x[j]);
   }
-  positive_ordered[2] alpha; 
-  alpha <- a + head(cumulative_sum(theta), 2) * (b - a); 
 }
 
 model {
