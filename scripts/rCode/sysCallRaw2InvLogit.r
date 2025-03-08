@@ -62,7 +62,7 @@ if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/doubleChangePoint.stan", 
                      data = data_jags, cores=3,chains=3, refresh = 1000, 
                      pars = stanmonitor, 
-                     iter=8000, warmup = 4000, thin = 2,control = list(max_treedepth=10))
+                     iter=15000, warmup = 5000, thin = 2,control = list(max_treedepth=10))
   #saveRDS(result_case, file.out)
   summary(do.call(rbind, 
                   args = get_sampler_params(result_case, inc_warmup = FALSE)),
@@ -73,7 +73,7 @@ if(!file.exists(file.out)){
 
 summary.vals <- rstan::summary(result_case)$summary
 pred.vals <- summary.vals[grep(x = rownames(summary.vals), pattern = "mu"),]
-rm.index <- which(exp(pred.vals[,"mean"])>50)
+#rm.index <- which(exp(pred.vals[,"mean"])>50)
 out.cor <- cor(exp(pred.vals[-rm.index,"mean"]), data_jags$y[-rm.index], method="s")
 log_lik6 <- extract_log_lik(result_case)
 out.looic <- loo::loo(log_lik6, moment_match = TRUE)

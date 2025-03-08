@@ -54,14 +54,14 @@ data_jags <- list(
 
 ## Now make the scaled values here
 all.dat <- data_jags
-file.out <- paste("./data/brmsModsOut/modelAGG_rawX_GAUS_2CP_allmods_", rowID, ".RDS", sep='')
+file.out <- paste("./data/brmsModsOut/model_InvLogit_rawX_GAUS_2CP_allmods_", rowID, ".RDS", sep='')
 stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik", "mu")
 stanmonitor <- c("a1","a2","b1","b2","b3","alpha", "phi", "mu", "log_lik")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/doubleChangePoint_gaus.stan", 
                      data = all.dat, cores=3,chains=3, refresh = 1000, 
                      pars = stanmonitor, 
-                     iter=8000, warmup = 4000, thin = 2,control = list(max_treedepth=10))
+                     iter=15000, warmup = 5000, thin = 2,control = list(max_treedepth=10))
   #saveRDS(result_case, file.out)
 }else{
   print("Done")

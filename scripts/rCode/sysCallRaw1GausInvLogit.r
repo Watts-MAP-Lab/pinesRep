@@ -61,7 +61,7 @@ if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/updatedMultilevelInvLogit_Gaus.stan", 
                      data = all.dat, cores=3,chains=3, refresh = 100, 
                      pars = stanmonitor, 
-                     iter=8000, warmup = 4000, thin = 2,control = list(max_treedepth=10))
+                     iter=15000, warmup = 5000, thin = 2,control = list(max_treedepth=10))
   #saveRDS(result_case, file.out)
 }else{
   print("Done")
