@@ -57,6 +57,7 @@ all.dat <- data_jags
 file.out <- paste("./data/brmsModsOut/model_InvLogit_rawX_GAUS_2CP_allmods_", rowID, ".RDS", sep='')
 stanmonitor = c("alpha", "beta", "phi", "r", "sigma_p", "sigma_p2", "log_lik", "mu")
 stanmonitor <- c("a1","a2","b1","b2","b3","alpha", "phi", "mu", "log_lik")
+stanmonitor <- c("a1","a2","a3","b1","b2","b3","b4","alpha", "phi", "mu", "log_lik")
 if(!file.exists(file.out)){
   result_case = stan(file="./scripts/stan_models/doubleChangePoint_gaus.stan", 
                      data = all.dat, cores=3,chains=3, refresh = 1000, 
