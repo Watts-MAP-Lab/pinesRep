@@ -74,7 +74,7 @@ if(!file.exists(file.out)){
 summary.vals <- rstan::summary(result_case)$summary
 pred.vals <- summary.vals[grep(x = rownames(summary.vals), pattern = "mu"),]
 #rm.index <- which(exp(pred.vals[,"mean"])>50)
-out.cor <- cor(exp(pred.vals[-rm.index,"mean"]), data_jags$y[-rm.index], method="s")
+out.cor <- cor(exp(pred.vals[,"mean"]), data_jags$y, method="s")
 log_lik6 <- extract_log_lik(result_case)
 out.looic <- loo::loo(log_lik6, moment_match = TRUE)
 ## Now create all of the figure values
