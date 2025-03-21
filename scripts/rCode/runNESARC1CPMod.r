@@ -35,7 +35,7 @@ library(pscl)
 mod.execute <- as.integer(commandArgs(1))
 
 
-in.dat <- read.csv("~/Downloads/NESARCw1_nonlinear.csv")
+in.dat <- read.csv("./data/NESARCw1_nonlinear.csv")
 tmp.dat <- in.dat
 tmp.dat <- in.dat[complete.cases(tmp.dat[,c("AUDsxct", "externalizing", "AGE")]),]
 tmp.dat1 <- tmp.dat
