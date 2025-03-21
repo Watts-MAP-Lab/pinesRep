@@ -1,16 +1,15 @@
-## Figure 3 production script here
-## This script will be used to produce the figure 3 results
+## Figure 1 will build the case for the need of the changepoint model
+## IT will compare three different models
+## One with a basic Bayesian Poisson model
+## One with the 1 cp model
+## One with a 2 cp model
 
-## Load library(s)
-library(ggplot2)
-library(bayesplot)
-library(ggpubr)
-library(ggExtra)
+## I will need to compare the convergence of the CP across the 1 and 2 cp models
+## and then compare how the prediction varies across the three models
+## I am going to do this in the overall 
 
-## Now expand this to the all_mods runs
 ## First thing is to load the data
 in.dat <- read.csv("./data/ABCD_CBCL_BL.csv")
-in.dat <- in.dat[complete.cases(in.dat[,c("cbcl_scr_syn_internal_r", "cbcl_scr_syn_external_r", "interview_age")]),]
 
 ## Library(s)
 library(brms)
@@ -30,55 +29,52 @@ all.mods$Var2 <- as.character(all.mods$Var2)
 all.mods <- all.mods[-which(as.character(all.mods$Var1)==as.character(all.mods$Var2)),]
 all.mods <- unique(all.mods)
 
-## Load our models
-in.ols <- readRDS("./data/brmsModsOut/model_rawX_GAUS_NOCP_allmods_1.RDS")
-in.1cpNB <- readRDS("./data/brmsModsOut/model_rawX_NB_1CP_allmods_1.RDS")
-in.2cpNB <- readRDS("./data/brmsModsOut/model_rawX_NB_2CP_allmods_1.RDS")
+## Find our models of interest
+mod.int <- c(1,4)
 
-## Start with the OLS
-sum.valsEI <- in.ols$out.sum
-in.dat$basicLMEREst <- sum.valsEI["alpha[1]","mean"] + sum.valsEI["beta[1]","mean"] * in.dat$cbcl_scr_syn_internal_r
-## Now create the model residuals
-in.dat$modelResidLMER <- in.dat$cbcl_scr_syn_external_r - in.ols$out.sum[grep(pattern = "mu", x = rownames(in.ols$out.sum)),"mean"]
+## Load the 1 cp model 
+mod.1cpEI <- readRDS("./data/brmsModsOut/model_rawX_NB_1CP_allmods_1.RDS")
+mod.1cpIE <- readRDS("./data/brmsModsOut/model_rawX_NB_1CP_allmods_4.RDS")
 
+## Now prep all of our plot vals
+tmp.dat <- in.dat[complete.cases(in.dat[,c("cbcl_scr_syn_external_r", "cbcl_scr_syn_internal_r", "interview_age")]),]
+sum.valsEI <- mod.1cpEI$out.sum
+sum.valsIE <- mod.1cpIE$out.sum
 
-## Now prep our data with the estimates from each of these models
-sum.valsEI <- in.1cpNB$out.sum
-pred.vals.one <- sum.valsEI["alpha[1]","mean"] + sum.valsEI["beta[1]","mean"] * in.dat$cbcl_scr_syn_internal_r
-pred.vals.two <- sum.valsEI["alpha[2]","mean"] + sum.valsEI["beta[2]","mean"] * in.dat$cbcl_scr_syn_internal_r
+## Now grab the predicted values
+pred.vals.one <- sum.valsEI["alpha[1]","mean"] + sum.valsEI["beta[1]","mean"] * tmp.dat$cbcl_scr_syn_internal_r
+pred.vals.two <- sum.valsEI["alpha[2]","mean"] + sum.valsEI["beta[2]","mean"] * tmp.dat$cbcl_scr_syn_internal_r
 cp.val <- sum.valsEI["r","mean"]
 index.lt <- which(tmp.dat$cbcl_scr_syn_internal_r<cp.val)
-in.dat$predOne <- ifelse(in.dat$cbcl_scr_syn_internal_r < cp.val, pred.vals.one, pred.vals.two)
-#in.dat$predOne[-index.lt] <- pred.vals.two[-index.lt]
-in.dat$predOneExp <- exp(in.dat$predOne)
-## Now gorup these values
-in.dat$predOneFit <- in.1cpNB$out.sum[grep(pattern = "mu", x = rownames(in.1cpNB$out.sum)),"mean"]
-in.dat$predOneGroup <- ifelse(in.dat$cbcl_scr_syn_internal_r < cp.val, "LT", "GT")
-in.dat$modelResid1CP <- in.dat$cbcl_scr_syn_external_r - exp(in.1cpNB$out.sum[grep(pattern = "mu", x = rownames(in.1cpNB$out.sum)),"mean"])
+tmp.dat$predOne <- pred.vals.one
+tmp.dat$predOne[-index.lt] <- pred.vals.two[-index.lt]
 
-## Now do the 2cp model
-sum.valsEI <- in.2cpNB$out.sum
-pred.vals.one <- sum.valsEI["alpha[1]","mean"] + sum.valsEI["beta[1]","mean"] * in.dat$cbcl_scr_syn_internal_r
-pred.vals.two <- sum.valsEI["alpha[2]","mean"] + sum.valsEI["beta[2]","mean"] * in.dat$cbcl_scr_syn_internal_r
-pred.vals.thr <- sum.valsEI["alpha[3]","mean"] + sum.valsEI["beta[3]","mean"] * in.dat$cbcl_scr_syn_internal_r
-cp1.val <- sum.valsEI["r[1]","mean"]
-cp2.val <- sum.valsEI["r[2]","mean"]
-index.lt2 <- which(tmp.dat$cbcl_scr_syn_internal_r<cp2.val)
-index.lt1 <- which(tmp.dat$cbcl_scr_syn_internal_r<cp1.val)
-in.dat$predTwo <- ifelse(in.dat$cbcl_scr_syn_internal_r < cp1.val, pred.vals.one, ifelse(in.dat$cbcl_scr_syn_internal_r < cp2.val, pred.vals.two, pred.vals.thr))
-in.dat$predTwoExp <- exp(in.dat$predTwo)
-in.dat$predTwoGroup <- ifelse(in.dat$cbcl_scr_syn_internal_r < cp1.val, "LT", ifelse(in.dat$cbcl_scr_syn_internal_r < cp2.val, "MD", "GT"))
+## Now do the same for IE
+pred.vals.one <- sum.valsIE["alpha[1]","mean"] + sum.valsIE["beta[1]","mean"] * tmp.dat$cbcl_scr_syn_external_r
+pred.vals.two <- sum.valsIE["alpha[2]","mean"] + sum.valsIE["beta[2]","mean"] * tmp.dat$cbcl_scr_syn_external_r
+cp.val <- sum.valsIE["r","mean"]
+index.lt <- which(tmp.dat$cbcl_scr_syn_external_r<cp.val)
+tmp.dat$predOne2 <- pred.vals.one
+tmp.dat$predOne2[-index.lt] <- pred.vals.two[-index.lt]
 
-
-## Now plot all of these
-out.plot <- ggplot(in.dat, aes(x=cbcl_scr_syn_internal_r, y=cbcl_scr_syn_external_r)) +
-  geom_hex(aes(fill=log(..count..)),bins=40) +
-  geom_line(data = in.dat, aes(x=cbcl_scr_syn_internal_r, y=basicLMEREst), color="blue") +
-  geom_line(data = in.dat, aes(x=cbcl_scr_syn_internal_r, y=predOneExp), color="orange") +
-  geom_line(data = in.dat, aes(x=cbcl_scr_syn_internal_r, y=predTwoExp), color="purple") +
-  coord_cartesian(ylim=c(0,50)) +
+## Now create the figures here
+p1 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_internal_r, y = log(cbcl_scr_syn_external_r + 1))) +
+  geom_point(alpha=0) +
   theme_bw() +
-  xlab("Internalizing") + ylab("Externalizing") + theme(legend.position = "NULL")
+  geom_hex(aes(fill=log(..count..)), bins=15) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_internal_r, y=predOne)) +
+  xlab("Internal") + ylab("log(External)") +
+  theme(legend.position = "NULL") +
+  coord_cartesian(ylim = c(0,5))
 
-## Now save this figure
-ggsave(filename = "./reports/figure2ModelComparison.png", plot = out.plot, dpi = 300, width=9, height = 6, units="in")
+p2 <- ggplot(tmp.dat, aes(x=cbcl_scr_syn_external_r, y = log(cbcl_scr_syn_internal_r + 1))) +
+  geom_point(alpha=0) +
+  theme_bw() +
+  geom_hex(aes(fill=log(..count..)), bins=15) +
+  geom_line(data = tmp.dat, aes(x=cbcl_scr_syn_external_r, y=predOne2)) +
+  ylab("log(Internal)") + xlab("External") +
+  theme(legend.position = "NULL") +
+  coord_cartesian(ylim = c(0,5))
+
+out.plot <- ggarrange(p1, p2, labels = c("A","B"))
+ggsave(filename = "./reports/figure3EIRevCompare.png", plot = out.plot, dpi = 300, width=7, height = 4, units="in")
