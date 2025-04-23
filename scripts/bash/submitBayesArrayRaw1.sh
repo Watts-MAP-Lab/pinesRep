@@ -11,6 +11,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --chdir=/home/rosena/pinesRep
 #SBATCH --array=1-48
+#SBATCH --array=14,22,28,29
 
 module purge
 setup_accre_software_stack
